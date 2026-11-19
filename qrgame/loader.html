@@ -1,15 +1,5 @@
-<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
-<style>body{margin:0;background:#1a1214;color:#eee;font:16px monospace}</style>
-<script>
-(async()=>{
-const h=location.hash.slice(1);
-if(!h){document.body.textContent='Sem jogo no hash (#...)';return}
-try{
-const b=atob(h.replace(/-/g,'+').replace(/_/g,'/'));
-const u=Uint8Array.from(b,c=>c.charCodeAt(0));
-const s=new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-const code=await new Response(s).text();
-(0,eval)(code);
-}catch(e){document.body.textContent='Erro: '+e}
-})()
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body><script>
+(async()=>{try{let h=location.hash.slice(1),u;if(!h){document.body.textContent='Abra a URL completa do jogo, incluindo #.';return}
+if(h[0]=='~'){let pad=+h[1],s=h.slice(2),abc="!$()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~";if(s.length%5||pad>3)throw Error('URL incompleta');u=new Uint8Array(s.length/5*4);let view=new DataView(u.buffer);for(let i=0;i<s.length;i+=5){let n=0;for(let j=0;j<5;j++){let v=abc.indexOf(s[i+j]);if(v<0)throw Error('Codigo invalido');n=n*85+v}if(n>4294967295)throw Error('Codigo invalido');view.setUint32(i/5*4,n)}u=u.slice(0,u.length-pad)}else{let b=atob(h.replace(/-/g,'+').replace(/_/g,'/'));u=Uint8Array.from(b,c=>c.charCodeAt(0))}
+let stream=new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'));(0,eval)(await new Response(stream).text())}catch(e){document.body.textContent='Erro: '+e.message}})();
 </script>
