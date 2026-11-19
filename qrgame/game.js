@@ -1,0 +1,1 @@
+c=document.body.appendChild(document.createElement('canvas'));c.width=c.height=240;c.style.cssText='width:100%;image-rendering:pixelated;background:#222';x=c.getContext('2d');let p=0;(function f(){x.clearRect(0,0,240,240);x.fillStyle='#e94';x.fillRect(p%200,100,32,32);p+=2;requestAnimationFrame(f)})()

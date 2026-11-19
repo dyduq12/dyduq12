@@ -1,0 +1,15 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{margin:0;background:#1a1214;color:#eee;font:16px monospace}</style>
+<script>
+(async()=>{
+const h=location.hash.slice(1);
+if(!h){document.body.textContent='Sem jogo no hash (#...)';return}
+try{
+const b=atob(h.replace(/-/g,'+').replace(/_/g,'/'));
+const u=Uint8Array.from(b,c=>c.charCodeAt(0));
+const s=new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+const code=await new Response(s).text();
+(0,eval)(code);
+}catch(e){document.body.textContent='Erro: '+e}
+})()
+</script>
