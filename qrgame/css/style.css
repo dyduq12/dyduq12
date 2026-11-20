@@ -209,13 +209,17 @@ b{font-weight:700}
 .raw-head b{color:var(--grn);font-weight:700}
 .raw-box pre,#xray-code{margin:0;font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;font-size:.78rem;line-height:1.5;color:#2EE59D;max-height:210px;overflow-y:auto;word-break:break-all;white-space:pre-wrap}
 .scale-stage{max-width:720px;margin:1.5rem auto 0}
-.scale-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 16px;padding:.6rem .8rem;background:#0D1018;border:1px solid rgba(244,241,234,.14);border-bottom:0;font:700 .72rem/1.4 var(--mono);letter-spacing:.04em;color:var(--dim)}
-.scale-bar .sb-game{color:var(--grn)}
-.scale-bar .sb-photo{color:var(--org)}
-.scale-bar b{color:var(--yel);font-weight:700}
+.scale-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem 1.25rem;margin-bottom:.65rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--dim)}
+.scale-head b{color:var(--yel);font-weight:700}
+.sq-game,.sq-photo{display:inline-block;width:12px;height:12px;vertical-align:-1px;margin-right:6px}
+.sq-game{background:#FFD23F;border:1px solid #FFF3B0}
+.sq-photo{background:#181D2C;border:1px solid #4A5778}
 #scale-canvas{display:block;width:100%;aspect-ratio:16 / 10;background:#06070B;border:1px solid rgba(244,241,234,.14)}
-#scale-replay{display:inline-flex;align-items:center;gap:.4em;margin-top:.6rem;padding:.35rem .2rem;border:0;background:none;cursor:pointer;color:var(--dim);font:400 .8rem var(--mono);border-bottom:1px dashed var(--faint);touch-action:manipulation}
-#scale-replay:hover{color:var(--cream);border-bottom-color:var(--cream)}
+.scale-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem;margin-top:.65rem;font-family:'JetBrains Mono',monospace;font-size:.82rem}
+.scale-foot p{margin:0;color:var(--dim)}
+.scale-foot b{color:var(--yel);font-weight:700}
+#scale-replay.btn{background:transparent;border:1px solid rgba(244,241,234,.22);color:#F4F1EA;clip-path:none;padding:.4rem .75rem;font-size:.75rem;min-height:0;text-transform:none;font-family:var(--mono);font-weight:700}
+#scale-replay.btn:hover{background:rgba(244,241,234,.1);color:#F4F1EA}
 .xr-foot{display:flex;flex-wrap:wrap;align-items:center;gap:14px 28px;margin-top:18px}
 .btn-copy{background:rgba(46,229,157,.14);color:var(--grn);min-height:44px;text-transform:none;font-family:var(--mono);font-weight:700;font-size:.9rem}
 .btn-copy:hover{background:var(--grn);color:var(--obs)}
