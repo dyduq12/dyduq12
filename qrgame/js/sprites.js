@@ -1,16 +1,17 @@
-// Sprites pixel art 8x8 dos 7 ETs (recuperados da versao "Slimes Cosmicos").
+// Sprites pixel art 8x8 dos 7 ETs (v0.2.0). Cada ET mora num planeta (campo planet) e num jogo (campo game).
 // Legenda: '#' pixel do corpo, 'h' brilho (corpo + overlay branco translucido), '.' vazio.
-// eyes: [coluna, linha] dos dois olhos escuros 1x1. A matriz ja esta espelhada.
+// eyes: [coluna, linha] dos dois olhos 1x1 (cor ET_EYE). accent: cor de destaque do ET. A matriz ja esta espelhada.
 export const ET_SIZE = 8;
-export const ET_PALETTE = ['#bd71ff', '#65e58e', '#55d9ed', '#ff974a', '#639cff', '#df70f9', '#ffd35c'];
+export const ET_EYE = '#10131C';
+export const ET_PALETTE = ['#FF4D4D', '#FF5A36', '#2EE59D', '#38BDF8', '#3B82F6', '#F4F1EA', '#FFD23F'];
 export const ETS = [
-  {id:0,name:'Gotinha Roxa',color:'#bd71ff',rows:['........','...##...','..####..','.h#####.','########','########','.######.','..####..'],eyes:[[2,4],[5,4]]},
-  {id:1,name:'Slime Verde',color:'#65e58e',rows:['........','........','..####..','.h#####.','########','########','########','.##..##.'],eyes:[[2,4],[5,4]]},
-  {id:2,name:'Cogumelo Ciano',color:'#55d9ed',rows:['..####..','.h#####.','hh######','hh######','...##...','..####..','..####..','...##...'],eyes:[[2,3],[5,3]]},
-  {id:3,name:'Chama Laranja',color:'#ff974a',rows:['...##...','...##...','..####..','h.####.#','########','########','.######.','..####..'],eyes:[[2,4],[5,4]]},
-  {id:4,name:'Cristal Azul',color:'#639cff',rows:['...##...','..####..','.h#####.','hh######','########','.######.','..####..','...##...'],eyes:[[2,4],[5,4]]},
-  {id:5,name:'Caveira Neon',color:'#df70f9',rows:['..####..','.h#####.','hh######','hh######','##.##.##','.######.','..####..','..#..#..'],eyes:[[2,4],[5,4]]},
-  {id:6,name:'Estrela Dourada',color:'#ffd35c',rows:['...##...','h..##..#','hh######','.h#####.','########','.######.','#..##..#','...##...'],eyes:[[2,4],[5,4]]}
+  {id:0,name:'Redox',planet:'Kineton',game:'#01',color:'#FF4D4D',accent:'#FFD23F',rows:['........','...##...','..####..','.h#####.','########','########','.######.','..####..'],eyes:[[2,4],[5,4]]},
+  {id:1,name:'Krakel',planet:'Tecton-IV',game:'#02',color:'#FF5A36',accent:'#FFD23F',rows:['...##...','...##...','..####..','h.####.#','########','########','.######.','..####..'],eyes:[[2,4],[5,4]]},
+  {id:2,name:'Glúon',planet:'Hadrôn',game:'#03',color:'#2EE59D',accent:'#A6F7D3',rows:['........','........','..####..','.h#####.','########','########','########','.##..##.'],eyes:[[2,4],[5,4]]},
+  {id:3,name:'Sporak',planet:'Umbra-V',game:'#04',color:'#38BDF8',accent:'#9BE3FF',rows:['..####..','.h#####.','hh######','hh######','...##...','..####..','..####..','...##...'],eyes:[[2,3],[5,3]]},
+  {id:4,name:'Arest',planet:'Vértice-7',game:'#05',color:'#3B82F6',accent:'#9CC3FF',rows:['...##...','..####..','.h#####.','hh######','########','.######.','..####..','...##...'],eyes:[[2,4],[5,4]]},
+  {id:5,name:'Nulox',planet:'Entropia',game:'#06',color:'#F4F1EA',accent:'#FFFFFF',rows:['..####..','.h#####.','hh######','hh######','##.##.##','.######.','..####..','..#..#..'],eyes:[[2,4],[5,4]]},
+  {id:6,name:'Vesper',planet:'Horizonte-07',game:'#07',color:'#FFD23F',accent:'#FFF0A6',rows:['...##...','h..##..#','hh######','.h#####.','########','.######.','#..##..#','...##...'],eyes:[[2,4],[5,4]]}
 ];
 
 let ac;
