@@ -169,28 +169,35 @@ vy = -sqrt(V*V - vx*vx)</pre><svg class="bounce" viewBox="0 0 420 190" role="img
       </div>
 
       <div class="xray-head reveal">
-        <h3>RAIO-X DA COMPRESSÃO</h3>
-        <p>Arraste a lente sobre o QR Code para atravessar os quadradinhos e enxergar a programação real comprimida em Base85.</p>
+        <h3>O CÓDIGO REAL E A ESCALA DE TAMANHO</h3>
+        <p>Abaixo está o código Base85 comprimido que viaja dentro do link — e a comparação visual em bytes entre um jogo inteiro e uma única foto comum de celular.</p>
       </div>
-      <div class="xray reveal" id="xray" style="--pos:50%">
-        <div class="xr-layer xr-code"><pre id="xray-code" aria-label="Código Base85 do jogo 2048">Carregando o código…</pre></div>
-        <div class="xr-layer xr-qr"><img src="./assets/qr-2048.svg" alt="QR Code do 2048 Drop" width="400" height="400" decoding="async"></div>
-        <span class="xr-tag l">QR Code</span>
-        <span class="xr-tag r">Base85 · <span id="xray-count">2.592</span> caracteres (2.645 na URL)</span>
-        <div class="xr-handle" aria-hidden="true"></div>
-        <input class="xr-range" id="xray-range" type="range" min="0" max="100" value="50" aria-label="Arraste a lente para comparar o QR Code com o código Base85 real">
-        <span class="xr-focus" aria-hidden="true"></span>
+
+      <div class="raw-box reveal">
+        <div class="raw-head">
+          <span>PAYLOAD BASE85 · <b id="xray-count">2.592</b> CARACTERES (2.645 BYTES NA URL)</span>
+          <button class="btn btn-copy" id="xray-copy" type="button">[Copiar código bruto]</button>
+        </div>
+        <pre id="xray-code" aria-label="Código Base85 do jogo 2048">Carregando o código…</pre>
       </div>
-      <div class="xr-foot reveal">
-        <button class="btn btn-copy" id="xray-copy" type="button">[Copiar código bruto]</button>
-        <p class="xr-ratio">1 foto comum tirada no celular (~2 MB) = <b>772 jogos inteiros</b> como este (2,6 KB · <b>772× MENOR</b>)</p>
+
+      <div class="scale-stage reveal" id="scale-stage">
+        <div class="scale-head">
+          <span><i class="sq-game"></i> 1 JOGO INTEIRO = <b>2.645 bytes</b></span>
+          <span><i class="sq-photo"></i> 1 FOTO DE CELULAR = <b>2.041.940 bytes</b> (<b>772×</b>)</span>
+        </div>
+        <canvas id="scale-canvas" width="720" height="450" role="img" aria-label="Animação de zoom mostrando 1 quadrado de 2.645 bytes comparado a 772 quadrados de uma foto comum de 2.041.940 bytes"></canvas>
+        <div class="scale-foot">
+          <p id="scale-readout">Escala atual: <b>2.645 bytes</b> (1 quadrado)</p>
+          <button class="btn btn-copy" id="scale-replay" type="button">↻ Repetir zoom</button>
+        </div>
       </div>
     </div>
   </section>
 </main>
 
 <footer class="foot">
-  <p>Criado por Eduardo (<a href="https://github.com/dyduq12" target="_blank" rel="noopener">@dyduq12</a>)</p>
+  <p>Criado por <b>Eduardo Borborema</b> (<a href="https://github.com/dyduq12" target="_blank" rel="noopener">@dyduq12</a>)</p>
   <a class="cue" href="#topo">↑ Voltar à órbita</a>
 </footer>
 
