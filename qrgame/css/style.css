@@ -1,4 +1,4 @@
-/* QR Game v0.2.0. Universo continuo e aberto. */
+/* QR Game v0.2.1. Universo continuo e aberto. */
 :root{
   --obs:#090A0F;--surf:#11141D;--cream:#F4F1EA;--yel:#FFD23F;--org:#FF5A36;--grn:#2EE59D;--cya:#38BDF8;--red:#FF4D4D;
   --dim:rgba(244,241,234,.68);--faint:rgba(244,241,234,.3);--line:rgba(244,241,234,.16);
@@ -255,3 +255,46 @@ body.turbo .hot{animation:flick .25s steps(2) infinite}
   .steps li::after{transform:scaleX(1)!important}
   .rv .reveal{opacity:1;transform:none}
 }
+
+/* ---------- v0.2.1 ---------- */
+/* 1. Desktop: mundos #01 e #02 inteiros em 100vh */
+@media (min-width:900px){
+  .world{min-height:100vh;min-height:100svh;padding:0;gap:clamp(24px,4vw,64px);align-items:center}
+  .world-visual{position:sticky;top:0;align-self:start;height:100vh;height:100svh;align-content:center;justify-items:center}
+  .world-visual .orb{width:min(100%,50svh,420px);max-width:none}
+  .world-body{gap:clamp(8px,1.5svh,14px);padding-block:clamp(16px,3svh,32px)}
+  .logo{width:auto;max-width:100%;height:clamp(60px,10svh,100px)}
+  .desc{font-size:clamp(.92rem,1.7svh,1.02rem);line-height:1.5}
+  .demo{--dh:clamp(180px,32svh,290px);width:calc(var(--dh)*1.25 + 20px);max-width:100%;padding:10px}
+  .demo-canvas{aspect-ratio:5/4}
+  .steps{font-size:clamp(.95rem,2.6svh,1.3rem)}
+  .actions{margin-top:2px}
+  .world-num{top:50%;bottom:auto;transform:translateY(-50%);left:-.42em;right:auto;font-size:clamp(9rem,15vw,15rem);line-height:.8}
+  .world.rev .world-num{left:auto;right:-.42em}
+}
+
+/* 2. Modal do QR: moldura branca quadrada, margem uniforme, sem faixa verde */
+.qr-stage{width:min(76vmin,560px);aspect-ratio:1 / 1;padding:20px;background:#fff}
+.qr-stage img{display:block;width:100%;height:100%;aspect-ratio:1 / 1;object-fit:contain;background:#fff}
+.corner{margin:-10px}
+.beam{display:none}
+
+/* 3. Raio-X: palco quadrado, rotulos acima, texto Base85 preenchendo tudo */
+.xray{width:100%;max-width:400px;aspect-ratio:1 / 1;min-height:0;margin:40px auto 0;overflow:visible;-webkit-mask-image:none;mask-image:none;container-type:inline-size}
+.xr-layer{overflow:hidden}
+.xr-tag{top:-32px}
+.xr-tag.l{left:0}
+.xr-tag.r{right:0}
+.xr-code{padding:2cqw}
+.xr-code pre{font-family:'JetBrains Mono',monospace;font-size:8px;font-size:2.0513cqw;line-height:1.38;line-height:2.8235cqw;word-break:break-all;overflow-wrap:anywhere;white-space:pre-wrap;width:100%;height:100%;overflow:hidden}
+.xr-qr img{height:92%;width:auto;aspect-ratio:1 / 1;object-fit:contain}
+
+/* 4. Mobile: passos do 2048 Drop numa linha so */
+@media (max-width:600px){
+  .steps{font-size:clamp(.62rem,3.2vw,.8rem);gap:6px 8px}
+  .steps.n4{flex-wrap:nowrap;white-space:nowrap}
+  .steps li{gap:3px}
+}
+
+/* 5. Formulas dos dossies */
+.dos pre{font-family:'JetBrains Mono',monospace;font-size:.9rem;line-height:1.6}
