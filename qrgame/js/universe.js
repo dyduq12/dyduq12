@@ -921,70 +921,70 @@ function setupUI() {
     $('#lore-story').textContent = game.lore.story;
     $('#lore-origin-title').textContent = 'Origem do nome · ' + et.name;
     $('#lore-origin').textContent = game.lore.origin;
- spr($('#lore-et'), et, 12);
- lore.hidden = false; document.body.classList.add('lock');
- requestAnimationFrame(() => lore.classList.add('open'));
- lore.scrollTop = 0; sound('ui'); $('#lore-close').focus();
- markExplored(game.id);
- };
- const loreClose = () => { lore.classList.remove('open'); document.body.classList.remove('lock'); setTimeout(() => { lore.hidden = true; }, 250); if (lLast) lLast.focus(); };
- $$('[data-lore]').forEach(b => b.addEventListener('click', () => loreOpen(b)));
- $('#lore-close').addEventListener('click', loreClose);
- lore.addEventListener('click', e => { if (e.target === lore) loreClose(); });
- addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!lore.hidden) loreClose(); else if (!qr.hidden) qrClose(); });
- // historias dos pilares e dossies dos jogos
- $$('.more').forEach(b => b.addEventListener('click', () => {
- const o = b.getAttribute('aria-expanded') !== 'true';
- b.setAttribute('aria-expanded', String(o));
- b.closest('.fact').classList.toggle('open', o);
- b.textContent = o ? '– Esconder história' : '+ Ver história completa';
- sound('ui');
- }));
- $$('.btn-dos').forEach(b => b.addEventListener('click', () => {
- const o = b.getAttribute('aria-expanded') !== 'true';
- b.setAttribute('aria-expanded', String(o));
- $('#' + b.getAttribute('aria-controls')).classList.toggle('open', o);
- sound('ui');
- }));
- // Raio-X: slider, texto Base85 real e botao copiar
- const xr = $('#xray'), rg = $('#xray-range');
- rg.addEventListener('input', () => xr.style.setProperty('--pos', rg.value + '%'));
- const g1 = byId['01'], payload = g1 && g1.url ? g1.url.split('#')[1] || '' : '';
- if (payload) {
- $('#xray-code').textContent = payload;
- $('#xray-count').textContent = payload.length.toLocaleString('pt-BR');
- const cp = $('#xray-copy');
- cp.addEventListener('click', async () => {
- try { await navigator.clipboard.writeText(payload); }
- catch { const t = document.createElement('textarea'); t.value = payload; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch { /* sem clipboard */ } t.remove(); }
- cp.textContent = '[Copiado!]'; sound('ui');
- setTimeout(() => { cp.textContent = '[Copiar código bruto]'; }, 1800);
- });
- }
- // revelar ao rolar (a classe rv so entra quando o JS esta pronto para revelar)
- root.classList.add('rv');
- const items = $$('.reveal');
- if ('IntersectionObserver' in window) {
- const rio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); rio.unobserve(e.target); } }), { threshold: .12 });
- items.forEach(el => rio.observe(el));
- } else items.forEach(el => el.classList.add('in'));
+    spr($('#lore-et'), et, 12);
+    lore.hidden = false; document.body.classList.add('lock');
+    requestAnimationFrame(() => lore.classList.add('open'));
+    lore.scrollTop = 0; sound('ui'); $('#lore-close').focus();
+    markExplored(game.id);
+  };
+  const loreClose = () => { lore.classList.remove('open'); document.body.classList.remove('lock'); setTimeout(() => { lore.hidden = true; }, 250); if (lLast) lLast.focus(); };
+  $$('[data-lore]').forEach(b => b.addEventListener('click', () => loreOpen(b)));
+  $('#lore-close').addEventListener('click', loreClose);
+  lore.addEventListener('click', e => { if (e.target === lore) loreClose(); });
+  addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!lore.hidden) loreClose(); else if (!qr.hidden) qrClose(); });
+  // historias dos pilares e dossies dos jogos
+  $$('.more').forEach(b => b.addEventListener('click', () => {
+    const o = b.getAttribute('aria-expanded') !== 'true';
+    b.setAttribute('aria-expanded', String(o));
+    b.closest('.fact').classList.toggle('open', o);
+    b.textContent = o ? '– Esconder história' : '+ Ver história completa';
+    sound('ui');
+  }));
+  $$('.btn-dos').forEach(b => b.addEventListener('click', () => {
+    const o = b.getAttribute('aria-expanded') !== 'true';
+    b.setAttribute('aria-expanded', String(o));
+    $('#' + b.getAttribute('aria-controls')).classList.toggle('open', o);
+    sound('ui');
+  }));
+  // Raio-X: slider, texto Base85 real e botao copiar
+  const xr = $('#xray'), rg = $('#xray-range');
+  rg.addEventListener('input', () => xr.style.setProperty('--pos', rg.value + '%'));
+  const g1 = byId['01'], payload = g1 && g1.url ? g1.url.split('#')[1] || '' : '';
+  if (payload) {
+    $('#xray-code').textContent = payload;
+    $('#xray-count').textContent = payload.length.toLocaleString('pt-BR');
+    const cp = $('#xray-copy');
+    cp.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(payload); }
+      catch { const t = document.createElement('textarea'); t.value = payload; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch { /* sem clipboard */ } t.remove(); }
+      cp.textContent = '[Copiado!]'; sound('ui');
+      setTimeout(() => { cp.textContent = '[Copiar código bruto]'; }, 1800);
+    });
+  }
+  // revelar ao rolar (a classe rv so entra quando o JS esta pronto para revelar)
+  root.classList.add('rv');
+  const items = $$('.reveal');
+  if ('IntersectionObserver' in window) {
+    const rio = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); rio.unobserve(e.target); } }), { threshold: .12 });
+    items.forEach(el => rio.observe(el));
+  } else items.forEach(el => el.classList.add('in'));
 }
 
 function boot() {
- safe(() => setupUI());
- safe(() => paintSeals());
- safe(() => makeStars($('#stars')));
- safe(() => makeHero($('#hero-canvas')));
- $$('.world[data-game]').forEach(el => safe(() => {
- const g = byId[el.dataset.game];
- if (!g) return;
- makeWorldPlanet($('.planet-canvas', el), g);
- const set = stepper(g.id), demo = $('.demo-canvas', el);
- if (g.demoType === '2048') make2048(demo, set);
- else if (g.demoType === 'firewall') makeFirewall(demo, set);
- }));
- $$('.blip[data-game]').forEach(el => safe(() => { const g = byId[el.dataset.game]; if (g) makeRadar($('canvas', el), g); }));
- $$('.btn-fx[data-fx]').forEach(c => safe(() => makeFx(c)));
- requestAnimationFrame(frame);
+  safe(() => setupUI());
+  safe(() => paintSeals());
+  safe(() => makeStars($('#stars')));
+  safe(() => makeHero($('#hero-canvas')));
+  $$('.world[data-game]').forEach(el => safe(() => {
+    const g = byId[el.dataset.game];
+    if (!g) return;
+    makeWorldPlanet($('.planet-canvas', el), g);
+    const set = stepper(g.id), demo = $('.demo-canvas', el);
+    if (g.demoType === '2048') make2048(demo, set);
+    else if (g.demoType === 'firewall') makeFirewall(demo, set);
+  }));
+  $$('.blip[data-game]').forEach(el => safe(() => { const g = byId[el.dataset.game]; if (g) makeRadar($('canvas', el), g); }));
+  $$('.btn-fx[data-fx]').forEach(c => safe(() => makeFx(c)));
+  requestAnimationFrame(frame);
 }
 boot();
