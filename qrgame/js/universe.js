@@ -949,12 +949,7 @@ function setupUI() {
     $('#' + b.getAttribute('aria-controls')).classList.toggle('open', o);
     sound('ui');
   }));
-  // Raio-X: slider, texto Base85 real e botao copiar
-  const xr = $('#xray'), rg = $('#xray-range');
-  xr.style.aspectRatio = '1 / 1';
-  const xi = $('.xr-qr img', xr);
-  if (xi) { xi.width = 400; xi.height = 400; xi.style.aspectRatio = '1 / 1'; xi.style.objectFit = 'contain'; }
-  rg.addEventListener('input', () => xr.style.setProperty('--pos', rg.value + '%'));
+  // Raio-X: texto Base85 real do 2048 Drop, contagem e botao copiar
   const g1 = byId['01'], payload = g1 && g1.url ? g1.url.split('#')[1] || '' : '';
   if (payload) {
     $('#xray-code').textContent = payload;
@@ -976,8 +971,83 @@ function setupUI() {
   } else items.forEach(el => el.classList.add('in'));
 }
 
+/* ---------- palco de escala: 1 jogo = 2.645 bytes vs 772 jogos = 1 foto ---------- */
+function setupScale() {
+  const cv = $('#scale-canvas'), stage = $('#scale-stage'), out = $('#scale-readout'), btn = $('#scale-replay');
+  if (!cv || !stage) return;
+  const N = 28, TOTAL = 772, GAME = 2645, DUR = 2.8, HOLD = .5;
+  const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+  const st = { el: 0, play: false, e: calm ? 1 : 0, n: -1 };
+  const code = [[0, .62], [.1, .4], [.1, .7], [.2, .5], [.2, .34], [.1, .58], [.1, .72], [.2, .44], [0, .3]];
+  const readout = n => {
+    if (!out || n === st.n) return;
+    st.n = n;
+    const bytes = (n * GAME).toLocaleString('pt-BR');
+    out.innerHTML = n === 1 ? 'Escala atual: <b>2.645 bytes</b> (1 quadrado)'
+      : n === TOTAL ? 'Escala atual: <b>' + bytes + ' bytes</b> (772 quadrados = 1 foto)'
+        : 'Escala atual: <b>' + bytes + ' bytes</b> (' + n.toLocaleString('pt-BR') + ' quadrados)';
+  };
+  const start = () => { if (calm) return; st.el = -HOLD; st.play = true; st.e = 0; };
+  addScene(cv, {
+    update(dt) {
+      if (!st.play) return;
+      st.el += dt;
+      const k = clamp(st.el / DUR, 0, 1);
+      st.e = ease(k);
+      if (k >= 1) st.play = false;
+    },
+    draw() {
+      const g = this.g, w = this.w, h = this.h, e = st.e;
+      g.clearRect(0, 0, w, h);
+      g.fillStyle = '#06070B'; g.fillRect(0, 0, w, h);
+      const sF = Math.min(w, h) * .92 / N, s0 = sF * 14;
+      const s = s0 * Math.pow(sF / s0, e);
+      const cw = .5 + (N / 2 - .5) * e;
+      const n = clamp(Math.round(1 + (TOTAL - 1) * e), 1, TOTAL);
+      readout(n);
+      const sq = s * .86;
+      for (let i = TOTAL - 1; i >= 0; i--) {
+        const c = i % N, r = (i / N) | 0;
+        const x = w / 2 + (c + .5 - cw) * s - sq / 2, y = h / 2 + (r + .5 - cw) * s - sq / 2;
+        if (x + sq < 0 || x > w || y + sq < 0 || y > h) continue;
+        if (i === 0) {
+          g.globalAlpha = 1; g.fillStyle = '#FFD23F'; g.fillRect(x, y, sq, sq);
+          if (sq > 70) {
+            const a = clamp((sq - 70) / 90, 0, 1);
+            g.fillStyle = `rgba(9,10,15,${(.55 * a).toFixed(2)})`;
+            code.forEach(([ind, len], j) => g.fillRect(x + sq * (.1 + ind), y + sq * (.1 + j * .075), sq * len * .8, sq * .035));
+            g.globalAlpha = a; g.fillStyle = '#090A0F'; g.textAlign = 'center'; g.textBaseline = 'middle';
+            g.font = `800 ${Math.max(8, Math.round(sq * .12))}px ${MONO}`;
+            g.fillText('2.645 BYTES', x + sq / 2, y + sq * .86);
+            g.globalAlpha = 1;
+          }
+          continue;
+        }
+        g.globalAlpha = i < n ? 1 : .22;
+        g.fillStyle = '#181D2C'; g.fillRect(x, y, sq, sq);
+        if (sq > 5) { g.strokeStyle = '#2A3248'; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, sq - 1, sq - 1); }
+      }
+      g.globalAlpha = 1;
+      if (e > .85) {
+        const a = clamp((e - .85) / .15, 0, 1);
+        const x0 = w / 2 + (.5 - cw) * s - sq / 2, y0 = h / 2 + (.5 - cw) * s - sq / 2;
+        g.globalAlpha = a; g.strokeStyle = '#FFD23F'; g.lineWidth = 1.5; g.strokeRect(x0 - 2.5, y0 - 2.5, sq + 5, sq + 5);
+        g.fillStyle = '#FFD23F'; g.font = `700 11px ${MONO}`; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+        g.fillText('1 jogo', Math.max(4, x0 - 2), Math.max(11, y0 - 7));
+        g.globalAlpha = 1;
+      }
+    }
+  });
+  if (btn) btn.addEventListener('click', () => { sound('ui'); start(); });
+  if ('IntersectionObserver' in window) {
+    const o = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { start(); o.disconnect(); } }), { threshold: .35 });
+    o.observe(stage);
+  } else start();
+}
+
 function boot() {
   safe(() => setupUI());
+  safe(() => setupScale());
   safe(() => paintSeals());
   safe(() => makeStars($('#stars')));
   safe(() => makeHero($('#hero-canvas')));
