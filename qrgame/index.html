@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0d17">
+<title>QR Game · jogos inteiros dentro de um QR Code</title>
+<meta name="description" content="Jogos completos comprimidos dentro de um único QR Code. Explore os 7 planetas.">
+<script>document.documentElement.className='js'</script>
+<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+<header class="hero" id="topo">
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="hero-inner">
+    <p class="kicker">QR GAME // UNIVERSO v0.1.0</p>
+    <h1>Jogos inteiros escondidos dentro de um <span class="hl">QR&nbsp;Code</span></h1>
+    <p class="sub">Sem loja de apps e sem download: o jogo inteiro viaja dentro do próprio código. Escaneie, toque e jogue.</p>
+    <canvas id="emblem" class="emblem" width="168" height="168" role="img" aria-label="Emblema pixelado. Toque para trocar o ET." tabindex="0"></canvas>
+    <div class="status-panel" role="status">
+      <div class="stat"><span class="stat-k">JOGOS DISPONÍVEIS:</span><span class="stat-v" id="stat-active">2 / 7</span></div>
+      <div class="stat"><span class="stat-k">MODO OFFLINE:</span><span class="stat-v dim">EM BREVE</span></div>
+    </div>
+    <a class="scroll-btn" href="#planetas" id="scroll-btn">Explorar os planetas <span aria-hidden="true">↓</span></a>
+  </div>
+</header>
+
+<main>
+  <section class="section" id="planetas">
+    <div class="wrap">
+      <h2 class="sec-title"><span class="tag">// 01</span> Os 7 planetas</h2>
+      <p class="sec-sub">Cada planeta guarda um jogo e um ET morador. Toque no ET para ele pular. Cinco vezes seguidas ativam o modo turbo.</p>
+      <div id="vitrine"><noscript><p class="note">Ative o JavaScript para explorar os planetas.</p></noscript></div>
+    </div>
+  </section>
+
+  <section class="section alt" id="bastidores">
+    <div class="wrap">
+      <h2 class="sec-title"><span class="tag">// 02</span> Bastidores &amp; Raio-X</h2>
+      <p class="sec-sub">Como um jogo inteiro cabe num quadradinho de pixels.</p>
+      <div class="cards">
+        <article class="card reveal"><h3>~2.645 caracteres</h3><p>O código do jogo é minificado, comprimido com DEFLATE e escrito em Base85. O link inteiro, com endereço e tudo, cabe num QR Code de versão 38.</p></article>
+        <article class="card reveal"><h3>Zero imagens, zero áudios</h3><p>Todo desenho é feito no Canvas e todo som é sintetizado na hora pela Web Audio API. Nenhum arquivo externo é baixado para jogar.</p></article>
+        <article class="card reveal"><h3>Cartucho próprio do Firewall</h3><p>Comprimido, o Firewall Break passa de 4.000 caracteres e não cabe num QR legível. Por isso ele ganhou o <code>firewall.html</code>, e o QR aponta para essa página curta.</p></article>
+        <article class="card reveal"><h3>Os 7 ETs que sobraram</h3><p>Eles nasceram num protótipo antigo, os Slimes Cósmicos, e foram cortados quando o visual mudou. Cada um ganhou um lar nos planetas.</p><div class="et-row" id="et-row" aria-hidden="true"></div></article>
+      </div>
+
+      <div class="xray reveal" id="xray">
+        <div class="xray-head"><span class="tag">RAIO-X DA COMPRESSÃO</span><span class="xray-ratio" id="xr-ratio">≈ 770× menor</span></div>
+        <div class="bars">
+          <div class="bar-row"><span class="bar-label">Foto comum</span><div class="bar-track"><div class="bar photo" style="width:100%"></div></div><span class="bar-val">~2 MB</span></div>
+          <div class="bar-row"><span class="bar-label">Jogo 2048 (Base85)</span><div class="bar-track"><div class="bar code" id="xr-bar" style="width:3px"></div></div><span class="bar-val" id="xr-code">~2,6 KB</span></div>
+        </div>
+        <p class="xray-note">O texto abaixo é o jogo de verdade, exatamente como está dentro do QR Code (<span id="xr-count">2.592</span> caracteres).</p>
+        <button class="btn ghost" id="xr-btn" type="button" aria-expanded="false" aria-controls="xr-text">Revelar o texto comprimido</button>
+        <pre class="xray-text" id="xr-text" tabindex="0" aria-label="Texto Base85 do jogo 2048"></pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>Criado por Eduardo (<a href="https://github.com/dyduq12" target="_blank" rel="noopener">@dyduq12</a>)</p>
+  <button class="btn ghost small" id="to-top" type="button">↑ Voltar ao topo</button>
+</footer>
+<script type="module" src="./js/universe.js"></script>
+</body>
+</html>
