@@ -1,4 +1,4 @@
-// QR Game - universo (v0.2.0 / Fase 2B). ES Module.
+// QR Game - universo (v0.2.1 / Fase 2B). ES Module.
 // Liga o index.html aos dados (data/games.js) e aos ETs (js/sprites.js): planetas, ETs, demos, efeitos nos botoes,
 // overlays (QR e historia dos mundos), dossies, Raio-X, selos EXPLORADO (localStorage) e pausa de canvases fora da tela.
 import { GAMES } from '../data/games.js';
@@ -237,15 +237,18 @@ function artTecton() {
     gr.addColorStop(0, '#D6693B'); gr.addColorStop(.45, '#8C2B17'); gr.addColorStop(1, '#2A0F0A');
     g.fillStyle = gr; discPath(g, cx, cy, R); g.fill();
     g.save(); discPath(g, cx, cy, R); g.clip();
-    g.fillStyle = 'rgba(20,8,5,.28)';
+    g.fillStyle = 'rgba(20,8,5,.2)';
     for (let i = 0; i < 9; i++) { const p = sph(i * 1.9, Math.sin(i * 2.3) * .9, t * .12, .25); if (p[2] > 0) { g.beginPath(); g.arc(cx + p[0] * R, cy - p[1] * R, R * (.1 + (i % 3) * .05) * p[2], 0, TAU); g.fill(); } }
     g.lineCap = 'round'; g.lineJoin = 'round';
+    g.globalCompositeOperation = 'lighter';
     cracks.forEach((c, i) => {
-      const p = .55 + .45 * Math.sin(t * 2.2 + i * 1.7);
-      g.lineWidth = R * .09; g.strokeStyle = `rgba(255,90,54,${(.25 * p).toFixed(2)})`; sline(g, c, t * .12, .25, cx, cy, R);
-      g.lineWidth = R * .025; g.strokeStyle = `rgba(255,210,63,${(.55 + .4 * p).toFixed(2)})`; sline(g, c, t * .12, .25, cx, cy, R);
+      const p = .6 + .4 * Math.sin(t * 2.2 + i * 1.7);
+      g.lineWidth = R * .16; g.strokeStyle = `rgba(255,90,54,${(.3 * p).toFixed(2)})`; sline(g, c, t * .12, .25, cx, cy, R);
+      g.lineWidth = R * .07; g.strokeStyle = `rgba(255,90,54,${(.75 + .25 * p).toFixed(2)})`; sline(g, c, t * .12, .25, cx, cy, R);
+      g.lineWidth = R * .03; g.strokeStyle = `rgba(255,210,63,${(.85 + .15 * p).toFixed(2)})`; sline(g, c, t * .12, .25, cx, cy, R);
     });
-    limb(g, cx, cy, R, .7);
+    g.globalCompositeOperation = 'source-over';
+    limb(g, cx, cy, R, .5);
     g.restore();
     if (Math.random() < dt * 14 && sparks.length < 36) {
       const c = cracks[(Math.random() * cracks.length) | 0], q = c[(Math.random() * c.length) | 0], p = sph(q[0], q[1], t * .12, .25);
@@ -455,7 +458,7 @@ function makeHero(canvas) {
     draw(dt) {
       const g = this.g, w = this.w, h = this.h, t = this.t, fast = turbo();
       g.clearRect(0, 0, w, h);
-      const cx = w / 2, cy = h / 2, R = Math.min(w, h) * .25, rx = R * 1.85, ry = rx * .3, s = Math.max(3, Math.round(w / 80));
+      const cx = w / 2, cy = h / 2, R = Math.min(w, h) * .25, s = Math.max(3, Math.round(w / 80)), rx = Math.min(R * 1.85, w / 2 - s * 4.5), ry = rx * .3;
       const spin = t * (fast ? .9 : .26) + .6;
       const list = ETS.map((et, i) => { const an = spin + i / 7 * TAU; return { i, et, sa: Math.sin(an), ex: cx + rx * Math.cos(an), ey: cy + ry * Math.sin(an) + R * .08 }; });
       hits = [];
@@ -501,7 +504,7 @@ function makeWorldPlanet(canvas, game) {
     draw(dt) {
       const g = this.g, w = this.w, h = this.h, t = this.t;
       g.clearRect(0, 0, w, h);
-      const cx = w / 2, cy = h / 2 + h * .02, R = Math.min(w, h) * .25, rx = R * 1.95, ry = rx * .28, s = Math.max(3, Math.round(w / 64));
+      const cx = w / 2, cy = h / 2 + h * .02, R = Math.min(w, h) * .25, s = Math.max(3, Math.round(w / 64)), rx = Math.min(R * 1.95, w / 2 - s * 4.5), ry = rx * .28;
       const sa = Math.sin(st.ang), ex = cx + rx * Math.cos(st.ang), ey = cy + ry * sa;
       const putET = () => {
         const jh = st.jump > 0 ? Math.sin(Math.PI * (1 - st.jump)) * R * .7 : 0;
@@ -948,6 +951,9 @@ function setupUI() {
   }));
   // Raio-X: slider, texto Base85 real e botao copiar
   const xr = $('#xray'), rg = $('#xray-range');
+  xr.style.aspectRatio = '1 / 1';
+  const xi = $('.xr-qr img', xr);
+  if (xi) { xi.width = 400; xi.height = 400; xi.style.aspectRatio = '1 / 1'; xi.style.objectFit = 'contain'; }
   rg.addEventListener('input', () => xr.style.setProperty('--pos', rg.value + '%'));
   const g1 = byId['01'], payload = g1 && g1.url ? g1.url.split('#')[1] || '' : '';
   if (payload) {
