@@ -975,9 +975,14 @@ function setupUI() {
 function setupScale() {
   const cv = $('#scale-canvas'), stage = $('#scale-stage'), out = $('#scale-readout'), btn = $('#scale-replay');
   if (!cv || !stage) return;
-  const N = 28, TOTAL = 772, GAME = 2645, DUR = 2.8, HOLD = .5;
+  const N = 28, TOTAL = 772, GAME = 2645, HOLD = 1.4, DUR = 5.8, SHOW = 4.5, CYCLE = HOLD + DUR + SHOW;
   const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-  const st = { el: 0, play: false, e: calm ? 1 : 0, n: -1 };
+  const st = { el: calm ? HOLD + DUR + .6 : 0, active: false, e: 0, fin: 0, n: -1 };
+  const sync = () => {
+    st.e = ease(clamp((st.el - HOLD) / DUR, 0, 1));
+    st.fin = clamp((st.el - HOLD - DUR) / .6, 0, 1);
+  };
+  sync();
   const code = [[0, .62], [.1, .4], [.1, .7], [.2, .5], [.2, .34], [.1, .58], [.1, .72], [.2, .44], [0, .3]];
   const readout = n => {
     if (!out || n === st.n) return;
@@ -987,28 +992,28 @@ function setupScale() {
       : n === TOTAL ? 'Escala atual: <b>' + bytes + ' bytes</b> (772 quadrados = 1 foto)'
         : 'Escala atual: <b>' + bytes + ' bytes</b> (' + n.toLocaleString('pt-BR') + ' quadrados)';
   };
-  const start = () => { if (calm) return; st.el = -HOLD; st.play = true; st.e = 0; };
+  const restart = () => { if (calm) return; st.el = 0; st.active = true; sync(); };
   addScene(cv, {
     update(dt) {
-      if (!st.play) return;
+      if (!st.active || calm) return;
       st.el += dt;
-      const k = clamp(st.el / DUR, 0, 1);
-      st.e = ease(k);
-      if (k >= 1) st.play = false;
+      if (st.el >= CYCLE) st.el -= CYCLE;
+      sync();
     },
     draw() {
       const g = this.g, w = this.w, h = this.h, e = st.e;
       g.clearRect(0, 0, w, h);
       g.fillStyle = '#06070B'; g.fillRect(0, 0, w, h);
-      const sF = Math.min(w, h) * .92 / N, s0 = sF * 14;
+      const sF = Math.min(w, h) * .86 / N, s0 = sF * 14;
       const s = s0 * Math.pow(sF / s0, e);
       const cw = .5 + (N / 2 - .5) * e;
       const n = clamp(Math.round(1 + (TOTAL - 1) * e), 1, TOTAL);
       readout(n);
-      const sq = s * .86;
+      const sq = s * .86, fs = clamp(w / 60, 8.5, 12);
+      const px = wx => w / 2 + (wx - cw) * s, py = wy => h / 2 + (wy - cw) * s;
       for (let i = TOTAL - 1; i >= 0; i--) {
         const c = i % N, r = (i / N) | 0;
-        const x = w / 2 + (c + .5 - cw) * s - sq / 2, y = h / 2 + (r + .5 - cw) * s - sq / 2;
+        const x = px(c + .5) - sq / 2, y = py(r + .5) - sq / 2;
         if (x + sq < 0 || x > w || y + sq < 0 || y > h) continue;
         if (i === 0) {
           g.globalAlpha = 1; g.fillStyle = '#FFD23F'; g.fillRect(x, y, sq, sq);
@@ -1028,21 +1033,59 @@ function setupScale() {
         if (sq > 5) { g.strokeStyle = '#2A3248'; g.lineWidth = 1; g.strokeRect(x + .5, y + .5, sq - 1, sq - 1); }
       }
       g.globalAlpha = 1;
-      if (e > .85) {
-        const a = clamp((e - .85) / .15, 0, 1);
-        const x0 = w / 2 + (.5 - cw) * s - sq / 2, y0 = h / 2 + (.5 - cw) * s - sq / 2;
-        g.globalAlpha = a; g.strokeStyle = '#FFD23F'; g.lineWidth = 1.5; g.strokeRect(x0 - 2.5, y0 - 2.5, sq + 5, sq + 5);
-        g.fillStyle = '#FFD23F'; g.font = `700 11px ${MONO}`; g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-        g.fillText('1 jogo', Math.max(4, x0 - 2), Math.max(11, y0 - 7));
+      // moldura tracejada em volta dos 772 quadrados (27 linhas cheias + 16 na ultima)
+      const P = .1;
+      const fr = [[-P, -P], [N + P, -P], [N + P, 27 + P], [16 + P, 27 + P], [16 + P, N + P], [-P, N + P]];
+      g.save();
+      g.setLineDash([6, 5]); g.lineWidth = 1.2; g.strokeStyle = 'rgba(142, 150, 168, 0.35)';
+      g.beginPath();
+      fr.forEach(([wx, wy], i) => i ? g.lineTo(px(wx), py(wy)) : g.moveTo(px(wx), py(wy)));
+      g.closePath(); g.stroke();
+      g.restore();
+      g.textBaseline = 'alphabetic';
+      // legenda inicial: 1 jogo inteiro = 2.645 bytes
+      const a0 = 1 - clamp(e / .12, 0, 1);
+      if (a0 > 0) {
+        g.globalAlpha = a0; g.fillStyle = '#FFD23F'; g.textAlign = 'center'; g.font = `700 ${Math.round(fs + 2)}px ${MONO}`;
+        g.fillText('1 JOGO INTEIRO = 2.645 BYTES', w / 2, h - 12);
+        g.globalAlpha = 1;
+      }
+      // rotulo da foto (abaixo da moldura, a direita)
+      const a1 = clamp((e - .5) / .4, 0, 1);
+      if (a1 > 0) {
+        g.globalAlpha = a1; g.fillStyle = '#8E96A8'; g.textAlign = 'right'; g.font = `700 ${fs}px ${MONO}`;
+        g.fillText('1 FOTO DE CELULAR · 772 QUADRADOS (2.041.940 BYTES)', clamp(px(N + P), 8, w - 4), clamp(py(N + P) + fs + 5, fs + 2, h - 4));
+        g.globalAlpha = 1;
+      }
+      // marca d'agua sobre os quadrados escuros
+      if (st.fin > 0) {
+        g.globalAlpha = st.fin; g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.font = `700 ${Math.round(clamp(w / 48, 10, 15))}px ${MONO}`;
+        g.lineWidth = 3; g.strokeStyle = 'rgba(6,7,11,.65)'; g.fillStyle = 'rgba(244,241,234,.3)';
+        const mx = px(14), my = py(14);
+        g.strokeText('ÁREA DE 1 FOTO COMUM (771 QUADRADOS)', mx, my);
+        g.fillText('ÁREA DE 1 FOTO COMUM (771 QUADRADOS)', mx, my);
+        g.globalAlpha = 1; g.textBaseline = 'alphabetic';
+      }
+      // rotulo amarelo apontando para o 1o quadrado
+      const a2 = clamp((e - .85) / .15, 0, 1);
+      if (a2 > 0) {
+        const cx0 = px(.5), top0 = py(.5) - sq / 2;
+        const lx = clamp(px(-P), 4, w - 4), ly = Math.max(py(-P) - 8, fs + 2);
+        g.globalAlpha = a2; g.fillStyle = '#FFD23F'; g.strokeStyle = '#FFD23F';
+        g.textAlign = 'left'; g.font = `700 ${fs}px ${MONO}`;
+        g.fillText('1 JOGO (2.645 B)', lx, ly);
+        g.lineWidth = 1.2; g.setLineDash([]);
+        if (top0 - (ly + 3) > 3) { g.beginPath(); g.moveTo(cx0, ly + 3); g.lineTo(cx0, top0 - 2); g.stroke(); }
+        g.strokeRect(cx0 - sq / 2 - 2.5, top0 - 2.5, sq + 5, sq + 5);
         g.globalAlpha = 1;
       }
     }
   });
-  if (btn) btn.addEventListener('click', () => { sound('ui'); start(); });
+  if (btn) btn.addEventListener('click', () => { sound('ui'); restart(); });
   if ('IntersectionObserver' in window) {
-    const o = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { start(); o.disconnect(); } }), { threshold: .35 });
-    o.observe(stage);
-  } else start();
+    new IntersectionObserver(es => es.forEach(en => { st.active = en.intersectionRatio >= .3; }), { threshold: [0, .3] }).observe(stage);
+  } else st.active = true;
 }
 
 function boot() {
