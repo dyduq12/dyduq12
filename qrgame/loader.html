@@ -1,5 +1,99 @@
-<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body><script>
-(async()=>{try{let h=location.hash.slice(1),u;if(!h){document.body.textContent='Abra a URL completa do jogo, incluindo #.';return}
-if(h[0]=='~'){let pad=+h[1],s=h.slice(2),abc="!$()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~";if(s.length%5||pad>3)throw Error('URL incompleta');u=new Uint8Array(s.length/5*4);let view=new DataView(u.buffer);for(let i=0;i<s.length;i+=5){let n=0;for(let j=0;j<5;j++){let v=abc.indexOf(s[i+j]);if(v<0)throw Error('Codigo invalido');n=n*85+v}if(n>4294967295)throw Error('Codigo invalido');view.setUint32(i/5*4,n)}u=u.slice(0,u.length-pad)}else{let b=atob(h.replace(/-/g,'+').replace(/_/g,'/'));u=Uint8Array.from(b,c=>c.charCodeAt(0))}
-let stream=new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'));(0,eval)(await new Response(stream).text())}catch(e){document.body.textContent='Erro: '+e.message}})();
+<!doctype html><html lang=pt-BR><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1,viewport-fit=cover'><title>QR Game</title>
+<style>
+html,body{margin:0;height:100%;background:#090A0F;color:#F4F1EA;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace}
+iframe{position:fixed;left:0;top:0;border:0;display:block;width:100vw;height:100vh;height:100dvh;touch-action:none}
+#m{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(9,10,15,.94)}
+#m[hidden]{display:none}
+#m div{max-width:520px;border:2px solid #FFD23F;padding:18px 20px}
+#m.e div{border-color:#FF5A36}
+#m b{display:block;margin-bottom:8px;color:#FFD23F;font-size:18px;letter-spacing:.12em}
+#m.e b{color:#FF5A36}
+#m pre{margin:0;font:inherit;white-space:pre-wrap;word-break:break-word}
+</style>
+<div id=m hidden><div><b></b><pre></pre></div></div>
+<script>
+(()=>{
+const M=document.getElementById('m'),T=M.querySelector('b'),B=M.querySelector('pre'),A85='!$()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~',msg=e=>String(e&&e.message||e);
+let f,N=0,K='';
+const show=(t,m,e)=>{M.className=e?'e':'';T.textContent=t;B.textContent=m;M.hidden=false};
+M.onclick=()=>{if(M.className)M.hidden=true};
+onerror=(m,s,l,c,e)=>show('ERRO',msg(e||m),1);
+onunhandledrejection=e=>show('ERRO',msg(e.reason),1);
+function R(cfg){
+var P={x:0,y:0,down:false,justPressed:false,justReleased:false},
+pal=['#090A0F','#F4F1EA','#FFD23F','#FF5A36','#2EE59D','#38BDF8','#8E96A8','#181D2C','#FFFFFF','#FF4D4D'],
+cv,cx,W=0,H=0,AC,L,on,S=Object.assign(Object.create(null),cfg.s),FG=Object.create(null),HG=Object.create(null),
+FS='25755 65656 34443 65556 74647 74644 34553 55755 72227 11152 55655 44447 57755 65555 25552 65644 25563 65655 34216 72222 55557 55552 55775 55255 55222 71247 75557 26227 61247 61216 55711 74616 34757 71222 75757 75716 00000 00002 00024 02020 22202 61202 00700 02720 11244 07070 24442 21112 51245 22000 05250'.split(' '),
+CS="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,:!?-+/=()%'*",
+HN='trophy star heart sound mute play retry lock up down left right'.split(' '),
+HS='ve44e 4veah avve4 5dtd5 ha4ah gosog fjghe ehvrv 4ev44 44ve4 4cvc4 46v64'.split(' ');
+CS.split('').forEach(function(q,i){FG[q]={r:FS[i].split('').map(Number),w:3}});
+HN.forEach(function(q,i){HG[q]={r:HS[i].split('').map(function(d){return parseInt(d,32)}),w:5}});
+function rep(e){try{parent.postMessage({t:'e',m:String(e&&e.stack||e).slice(0,500)},'*')}catch(_){}}
+function fit(){var d=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=Math.round(W*d);cv.height=Math.round(H*d);cx.setTransform(d,0,0,d,0,0);cx.imageSmoothingEnabled=false}
+function init(){if(cv)return;cv=document.createElement('canvas');cv.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;display:block;touch-action:none';document.body.appendChild(cv);cx=cv.getContext('2d');fit();addEventListener('resize',fit)}
+function mv(e){if(e.isPrimary){P.x=e.clientX;P.y=e.clientY}}
+function up(e){mv(e);if(P.down)P.justReleased=true;P.down=false}
+function unlock(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(_){}}
+addEventListener('pointerdown',function(e){mv(e);if(e.isPrimary)P.down=P.justPressed=true;unlock()});
+addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up);
+addEventListener('blur',function(){up({})});
+addEventListener('contextmenu',function(e){e.preventDefault()});
+onerror=function(m,s,l,k,e){rep(e||m+' (linha '+l+')')};
+addEventListener('unhandledrejection',function(e){rep(e.reason)});
+function loop(fn){L=fn;if(on)return;on=1;var t0=-1;requestAnimationFrame(function f(t){var d=t0<0?1/60:Math.min((t-t0)/1000,.05);t0=t;try{L(d)}catch(e){rep(e);return}P.justPressed=P.justReleased=false;requestAnimationFrame(f)})}
+function txt(s,x,y,k,c,a){init();k=k||1;var it=[],u=-1,v=0,i,r,b,g,o;
+String(s).toUpperCase().replace(/@([A-Z]+)|[^]/g,function(q,n){g=n?HG[n.toLowerCase()]:FG[q];if(n&&!g)return;g=g||FG[' '];it.push(g);u+=g.w+1});
+o=a=='c'?x-u*k/2:a=='r'?x-u*k:x;cx.fillStyle=pal[c==null?1:c];
+for(i=0;i<it.length;i++){g=it[i];for(r=0;r<5;r++)for(b=0;b<g.w;b++)if(g.r[r]>>(g.w-1-b)&1)cx.fillRect(Math.round(o+(v+b)*k),Math.round(y+r*k),k,k);v+=g.w+1}
+return u*k}
+function spr(h,x,y,c,k){init();k=k||1;cx.fillStyle=pal[c==null?1:c];for(var r=0;r<8;r++){var n=parseInt(String(h).substr(r*2,2),16)||0;for(var b=0;b<8;b++)if(n>>(7-b)&1)cx.fillRect(x+b*k,y+r*k,k,k)}}
+function note(s,d,t,v){if(!AC)return;d=Math.max(d||.15,.03);v=v==null?.1:Math.max(v,.0002);var n=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=t||'square';o.frequency.value=440*Math.pow(2,(+s||0)/12);g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(v,n+.005);g.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(g);g.connect(AC.destination);o.start(n);o.stop(n+d+.02)}
+window.G={pal:pal,p:P,get c(){init();return cv},get x(){init();return cx},get w(){init();return W},get h(){init();return H},loop:loop,txt:txt,spr:spr,note:note,
+save:function(k,v){k=String(k).slice(0,32);v=String(v).slice(0,2000);S[k]=v;parent.postMessage({t:'s',k:k,v:v},'*')},
+load:function(k){k=String(k).slice(0,32);return k in S?S[k]:null}};
+try{(0,eval)(cfg.c)}catch(e){rep(e)}
+}
+async function dec(h){
+let u;
+if(typeof DecompressionStream=='undefined')throw Error('Este navegador não suporta DecompressionStream (deflate-raw).');
+if(h[0]=='~'){
+if(!/^[0-3]$/.test(h[1]))throw Error('Cabeçalho inválido');
+let p=+h[1],s=h.slice(2);
+if(s.length%5)throw Error('URL incompleta');
+u=new Uint8Array(s.length/5*4);let w=new DataView(u.buffer);
+for(let i=0;i<s.length;i+=5){let n=0;for(let j=0;j<5;j++){let d=A85.indexOf(s[i+j]);if(d<0)throw Error('Código inválido');n=n*85+d}
+if(n>4294967295)throw Error('Código inválido');w.setUint32(i/5*4,n)}
+u=u.slice(0,u.length-p)
+}else{
+if(!/^[\w-]+$/.test(h))throw Error('Link inválido: o código deve usar só A-Z a-z 0-9 - _');
+u=Uint8Array.from(atob(h.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0))
+}
+return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()
+}
+function start(code,h){
+let x=2166136261;for(const ch of h)x=Math.imul(x^ch.charCodeAt(0),16777619);
+K='qrgame_'+(x>>>0).toString(36)+'_';
+const s={};try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith(K))s[k.slice(K.length)]=localStorage.getItem(k)}}catch(e){}
+f=document.createElement('iframe');
+f.setAttribute('sandbox','allow-scripts');
+f.srcdoc='<!doctype html><meta charset=utf-8><style>html,body{margin:0;height:100%;background:#090A0F;touch-action:none}</style><body><script>('+R+')('+JSON.stringify({s,c:code}).replace(/</g,'\\u003c')+')<\/script>';
+f.onload=()=>f.focus();
+document.body.appendChild(f)
+}
+async function run(){
+const id=++N;if(f){f.remove();f=null}M.hidden=true;
+const h=location.hash.slice(1);
+if(!h){show('QR GAME','Abra o link completo do jogo, incluindo o # e o código que vem depois dele.');return}
+try{const code=await dec(h);if(id==N)start(code,h)}catch(e){if(id==N)show('ERRO',msg(e),1)}
+}
+addEventListener('hashchange',run);
+addEventListener('message',e=>{
+if(!f||e.source!==f.contentWindow)return;
+const d=e.data||{};
+if(d.t=='e')show('ERRO NO JOGO',String(d.m),1);
+else if(d.t=='s')try{localStorage.setItem(K+String(d.k).slice(0,32),String(d.v).slice(0,2000))}catch(x){}
+});
+run()
+})();
 </script>
