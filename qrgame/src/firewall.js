@@ -1,6 +1,6 @@
 // QR Game #02 - Firewall Break (fonte legivel; o pack.py minifica e renomeia).
 // Estruturas curtas: bolinha [x, y, vx, vy, tipo, ate]; capsula [x, y, tipo]; faisca [x, y, vx, vy, vida].
-const { loop, txt, note, save, load, pal } = QRG;
+const { loop, txt, note, save, load, pal, rect, line, clamp } = QRG;
 const { min, max, abs, sin, cos, sqrt, atan2, random, log2 } = Math;
 const COLUNAS = 32, LINHAS = 46, PASSO = 11, TOPO = 64;
 const LARGURA = 360, ALTURA = 640, BARRA_Y = 580, VEL = 240;
@@ -14,12 +14,9 @@ let barraX, angulo, alvo, arrastando, tempo, tremor, bonus, ultimoSom, proximoTi
 let relogio = 0, acum = 0;
 let recorde = +load('best') || 0;
 
-const limitar = (v, a, b) => max(a, min(b, v));
 const sortear = n => random() * n | 0;
 const largura = () => tempo < buff[1] ? 150 : 90;
-const mira = () => limitar(atan2(alvo[0] - barraX, max(45, BARRA_Y - alvo[1])), -1.2, 1.2);
-const ret = (cor, x, y, w, h) => { ctx.fillStyle = pal[cor]; ctx.fillRect(x, y, w, h); };
-const linha = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+const mira = () => clamp(atan2(alvo[0] - barraX, max(45, BARRA_Y - alvo[1])), -1.2, 1.2);
 
 function limpar() {
   bolinhas = [];
@@ -80,7 +77,7 @@ function fimDeRodada() {
 }
 
 function mover(v) {
-  barraX = limitar(v, largura() / 2, LARGURA - largura() / 2);
+  barraX = clamp(v, largura() / 2, LARGURA - largura() / 2);
 }
 
 function atualizar(d) {
@@ -94,12 +91,12 @@ function atualizar(d) {
       const [xAntigo, yAntigo] = b, w = largura();
       b[0] += b[2] * d;
       b[1] += b[3] * d;
-      if (b[0] < 2 || b[0] > 358) { b[0] = limitar(b[0], 2, 358); b[2] = -b[2]; }
+      if (b[0] < 2 || b[0] > 358) { b[0] = clamp(b[0], 2, 358); b[2] = -b[2]; }
       if (b[1] < TOPO) { b[1] = TOPO; b[3] = abs(b[3]); }
       // Rebote na barra: o angulo depende de onde a bolinha bate.
       if (b[3] > 0 && yAntigo <= BARRA_Y + 6 && b[1] >= BARRA_Y - 2 && b[1] <= BARRA_Y + 9 && abs(b[0] - barraX) <= w * .625 + 2) {
         b[1] = BARRA_Y - 2;
-        b[2] = limitar((b[0] - barraX) / (w * .625), -.9, .9) * VEL * .9;
+        b[2] = clamp((b[0] - barraX) / (w * .625), -.9, .9) * VEL * .9;
         b[3] = -sqrt(VEL * VEL - b[2] * b[2]);
       }
       if (b[1] > 612 && tempo < buff[2]) { b[1] = 612; b[3] = -abs(b[3]); }
@@ -174,7 +171,7 @@ function entrada(k, ox, oy) {
 }
 
 function desenhar(w, h, k, ox, oy) {
-  ret(0, 0, 0, w, h);
+  rect(0, 0, w, h, 0);
   ctx.save();
   ctx.translate(ox, oy);
   ctx.scale(k, k);
@@ -189,7 +186,7 @@ function desenhar(w, h, k, ox, oy) {
   txt(ROTULO.slice(2).filter((_, i) => tempo < buff[i]).join(' '), 150, 37, 2, 2);
   if (modo == 1) txt('@play@play', 320, 19, 2, 6);
 
-  blocos.forEach((v, i) => v && ret(COR_BLOCO[min(v, 6)], 4 + i % COLUNAS * PASSO, TOPO + (i / COLUNAS | 0) * PASSO, 10, 10));
+  blocos.forEach((v, i) => v && rect(4 + i % COLUNAS * PASSO, TOPO + (i / COLUNAS | 0) * PASSO, 10, 10, COR_BLOCO[min(v, 6)]));
 
   for (let tipo = 0; tipo < 3; tipo++) {
     ctx.fillStyle = pal[[tempo < buff[0] ? 2 : 1, 4, 3][tipo]];
@@ -200,34 +197,33 @@ function desenhar(w, h, k, ox, oy) {
     ctx.fill();
   }
 
-  ret(5, barraX - largura() / 2, BARRA_Y, largura(), 6);
-  if (tempo < buff[2]) { ctx.strokeStyle = pal[4]; linha(0, 614, LARGURA, 614); }
+  rect(barraX - largura() / 2, BARRA_Y, largura(), 6, 5);
+  if (tempo < buff[2]) line(0, 614, LARGURA, 614, 4);
 
   for (const q of capsulas) {
     const rotulo = ROTULO[q[2]], longo = rotulo.length > 2;
-    ret(COR_CAPSULA[q[2]], q[0] - 11, q[1] - 7, 22, 14);
+    rect(q[0] - 11, q[1] - 7, 22, 14, COR_CAPSULA[q[2]]);
     txt(rotulo, q[0], q[1] - (longo ? 2 : 5), longo ? 1 : 2, 0, 'c');
   }
 
   for (const q of faiscas) {
     ctx.globalAlpha = max(0, q[4] * 4);
-    ret(5, q[0], q[1], 2, 2);
+    rect(q[0], q[1], 2, 2, 5);
   }
   ctx.globalAlpha = 1;
 
   if (!modo) {
     const a = arrastando ? mira() : 0;
     ctx.globalAlpha = .5;
-    ctx.strokeStyle = pal[1];
     ctx.setLineDash([3, 5]);
-    linha(barraX, BARRA_Y, barraX + sin(a) * 120, BARRA_Y - cos(a) * 120);
+    line(barraX, BARRA_Y, barraX + sin(a) * 120, BARRA_Y - cos(a) * 120, 1);
     ctx.setLineDash([]);
     ctx.globalAlpha = 1;
   }
 
   if (modo == 2) {
     ctx.globalAlpha = .8;
-    ret(0, 0, TOPO, LARGURA, 576);
+    rect(0, TOPO, LARGURA, 576, 0);
     ctx.globalAlpha = 1;
     txt('@retry', 180, 315, 10, 1, 'c');
   }
