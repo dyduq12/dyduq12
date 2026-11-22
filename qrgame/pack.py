@@ -11,10 +11,11 @@ except ImportError:
     zopfli_compress = None
 BASE = "https://dyduq12.github.io/dyduq12/qrgame/loader.html"
 LIMIT = 2650
-G_PROPS = {"c","x","w","h","p","pal","loop","txt","spr","note","save","load"}
+
 def read(p):
     with open(p, "rb") as f:
         return f.read()
+
 def strip_js(src):
     out = []
     i = 0
@@ -51,22 +52,25 @@ def strip_js(src):
     s = re.sub(r" ?([=+\-*/%<>!&|^,;:?(){}\[\]]) ?", r"\1", s)
     s = re.sub(r";}", "}", s)
     return s.strip()
+
 def terser(src):
     try:
-        p = subprocess.run(["npx", "--yes", "terser", "--compress", "--mangle", "--format", "json"], input=src, capture_output=True, text=True, timeout=30)
+        p = subprocess.run(["npx", "--yes", "terser", "--compress", "--mangle", "reserved=['QRG']"], input=src, capture_output=True, text=True, timeout=30)
         if p.returncode == 0 and p.stdout.strip():
             return p.stdout.strip()
     except Exception:
         pass
     try:
-        p = subprocess.run(["terser", "--compress", "--mangle", "--format", "json"], input=src, capture_output=True, text=True, timeout=30)
+        p = subprocess.run(["terser", "--compress", "--mangle", "reserved=['QRG']"], input=src, capture_output=True, text=True, timeout=30)
         if p.returncode == 0 and p.stdout.strip():
             return p.stdout.strip()
     except Exception:
         pass
     return None
+
 def wrap_iife(code):
     return "(()=>{" + code + "})()"
+
 def main():
     src_path = sys.argv[1] if len(sys.argv) > 1 else "game.js"
     base = sys.argv[2] if len(sys.argv) > 2 else BASE
@@ -85,6 +89,14 @@ def main():
     if raw is None:
         c = zlib.compressobj(9, zlib.DEFLATED, -15)
         raw = c.compress(code.encode("utf-8")) + c.flush()
+    else:
+        raw = raw[2:-4]
+        try:
+            zlib.decompress(raw, -15)
+        except Exception as e:
+            print("AVISO: Zopfli produziu payload invalido; usando zlib.", e)
+            c = zlib.compressobj(9, zlib.DEFLATED, -15)
+            raw = c.compress(code.encode("utf-8")) + c.flush()
     payload = base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
     url = base + "#" + payload
     over = len(url) - LIMIT
@@ -101,10 +113,29 @@ def main():
         q.add_data(url); q.make(fit=True)
         img = q.make_image(fill_color="#000000", back_color="#FFFFFF")
         img.save("qr.png")
+        m = q.get_matrix()
+        n = len(m) + 8
+        svg = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{n}" height="{n}" viewBox="0 0 {n} {n}">']
+        svg.append(f'<rect width="{n}" height="{n}" fill="#FFFFFF"/>')
+        for r, row in enumerate(m):
+            for c, v in enumerate(row):
+                if v:
+                    svg.append(f'<rect x="{c+4}" y="{r+4}" width="1" height="1" fill="#000000"/>')
+        svg.append("</svg>")
         with open("qr.svg", "w", encoding="utf-8") as f:
-            f.write(q.make_image(image_factory=qrcode.image.svg.SvgPathImage).save("qr.svg") or "")
+            f.write("".join(svg))
         print("QR versao", q.version, "| 1:1 | border 4")
     except Exception as e:
         print("QR nao gerado:", e, "(pip install qrcode[pil])")
+    try:
+        pad = "=" * (-len(payload) % 4)
+        back = zlib.decompress(base64.urlsafe_b64decode(payload + pad), -15).decode("utf-8")
+        if back != code:
+            print("ERRO: validacao ponta a ponta falhou.")
+            sys.exit(1)
+        print("Validacao ponta a ponta: ok")
+    except Exception as e:
+        print("ERRO: validacao ponta a ponta falhou.", e)
+        sys.exit(1)
 if __name__ == "__main__":
     main()
