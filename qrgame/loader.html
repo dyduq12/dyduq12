@@ -12,6 +12,7 @@ html,body{margin:0;height:100%;background:#090A0F;color:#F4F1EA;font:14px/1.5 ui
 <div id=m hidden><div><b></b><pre></pre></div></div>
 <script>
 (()=>{
+let K;
 const M=document.getElementById('m'),T=M.querySelector('b'),B=M.querySelector('pre'),A85='!$()*+,-./0123456789:;=?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~',msg=e=>String(e&&e.message||e);
 const show=(t,m,e)=>{M.className=e?'e':'';T.textContent=t;B.textContent=m;M.hidden=false};
 M.onclick=()=>{if(M.className)M.hidden=true};
@@ -33,7 +34,7 @@ function mv(e){if(e.isPrimary){P.x=e.clientX;P.y=e.clientY}}
 function up(e){mv(e);if(P.down)P.justReleased=true;P.down=false}
 function unlock(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(_){}}
 addEventListener('pointerdown',function(e){mv(e);if(e.isPrimary)P.down=P.justPressed=true;unlock()});
-addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up);
+addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',function(e){mv(e);P.down=false});
 addEventListener('blur',function(){up({})});
 addEventListener('contextmenu',function(e){e.preventDefault()});
 function loop(fn){L=fn;if(on)return;on=1;init();cv.style.display='block';var t0=-1;requestAnimationFrame(function f(t){var d=t0<0?1/60:Math.min((t-t0)/1000,.05);t0=t;try{L(d)}catch(e){show('ERRO NO JOGO',e.message||String(e),1);return}P.justPressed=P.justReleased=false;requestAnimationFrame(f)})}
