@@ -45,7 +45,11 @@ for(i=0;i<it.length;i++){g=it[i];for(r=0;r<5;r++)for(b=0;b<g.w;b++)if(g.r[r]>>(g
 return u*k}
 function spr(h,x,y,c,k){init();k=k||1;cx.fillStyle=pal[c==null?1:c];for(var r=0;r<8;r++){var n=parseInt(String(h).substr(r*2,2),16)||0;for(var b=0;b<8;b++)if(n>>(7-b)&1)cx.fillRect(x+b*k,y+r*k,k,k)}}
 function note(s,d,t,v){if(!AC)return;d=Math.max(d||.15,.03);v=v==null?.1:Math.max(v,.0002);var n=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type=t||'square';o.frequency.value=440*Math.pow(2,(+s||0)/12);g.gain.setValueAtTime(0,n);g.gain.linearRampToValueAtTime(v,n+.005);g.gain.exponentialRampToValueAtTime(.0001,n+d);o.connect(g);g.connect(AC.destination);o.start(n);o.stop(n+d+.02)}
-window.QRG={pal:pal,p:P,get c(){init();return cv},get x(){init();return cx},get w(){init();return W},get h(){init();return H},loop:loop,txt:txt,spr:spr,note:note,
+function col(c){return c==null?pal[1]:typeof c=='number'?pal[c]:c}
+function rect(x,y,w,h,c){init();cx.fillStyle=col(c);cx.fillRect(x,y,w,h)}
+function line(x,y,x2,y2,c,w){init();cx.strokeStyle=col(c);cx.lineWidth=w||1;cx.beginPath();cx.moveTo(x,y);cx.lineTo(x2,y2);cx.stroke()}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+window.QRG={pal:pal,p:P,get c(){init();return cv},get x(){init();return cx},get w(){init();return W},get h(){init();return H},loop:loop,txt:txt,spr:spr,note:note,rect:rect,line:line,clamp:clamp,
 save:function(k,v){k=String(k).slice(0,32);v=String(v).slice(0,2000);try{localStorage.setItem(K+k,v)}catch(e){}},
 load:function(k){k=String(k).slice(0,32);try{return localStorage.getItem(K+k)}catch(e){return null}}};
 }
