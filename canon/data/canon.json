@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "works": [
+    {
+      "schemaVersion": 1,
+      "id": "anilist:90001",
+      "type": "anime",
+      "title": "Hoshizora no Kairo",
+      "year": 2023,
+      "genre": "Ficção Científica, Drama",
+      "studio": "Atelier Sora",
+      "director": "Haruka Mizuno",
+      "soundtrack": "Kenji Takahashi",
+      "starring": "Ren Sato, Aoi Mori",
+      "cover": null,
+      "palette": ["#1D3557", "#E63946"],
+      "scores": {
+        "geral": 9.5,
+        "historia": 9.5,
+        "gameplay_ritmo": 9.0,
+        "graficos_fotografia": 9.5,
+        "trilha": 10.0,
+        "direcao_arte": 9.5
+      },
+      "pros": [
+        "Direção de arte coesa do primeiro ao último episódio",
+        "Trilha sonora orquestral marcante"
+      ],
+      "cons": [
+        "Ritmo ligeiramente apressado no arco final"
+      ],
+      "status": "completed",
+      "verdict": "Referência moderna de ficção científica introspectiva.",
+      "createdAt": "2026-10-01T12:00:00.000Z",
+      "updatedAt": "2026-10-01T12:00:00.000Z"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "tmdb:80002",
+      "type": "movie",
+      "title": "Vidro e Sal",
+      "year": 2021,
+      "genre": "Drama, Suspense",
+      "studio": "Maré Filmes",
+      "director": "Clara Vasconcelos",
+      "soundtrack": "Rafael Nogueira",
+      "starring": "Helena Costa, Bruno Tavares",
+      "cover": null,
+      "palette": ["#2B2D42", "#8D99AE"],
+      "scores": {
+        "geral": 7.5,
+        "historia": 8.0,
+        "gameplay_ritmo": 7.0,
+        "graficos_fotografia": 8.5,
+        "trilha": 7.5,
+        "direcao_arte": 8.0
+      },
+      "pros": [
+        "Fotografia costeira em 35mm muito expressiva",
+        "Atuação contida e convincente da protagonista"
+      ],
+      "cons": [
+        "Terceiro ato previsível"
+      ],
+      "status": "completed",
+      "verdict": "Bom drama atmosférico com fotografia acima da média.",
+      "createdAt": "2026-10-05T15:30:00.000Z",
+      "updatedAt": "2026-10-05T15:30:00.000Z"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "rawg:70003",
+      "type": "game",
+      "title": "Ferro Silencioso",
+      "year": 2024,
+      "genre": "Ação, RPG",
+      "studio": "Forja Sul",
+      "director": "Diego Almeida",
+      "soundtrack": "Lúcia Prado",
+      "starring": "Elenco de Voz Local",
+      "cover": null,
+      "palette": ["#3D405B", "#E07A5F"],
+      "scores": {
+        "geral": 4.5,
+        "historia": 4.0,
+        "gameplay_ritmo": 4.5,
+        "graficos_fotografia": 5.5,
+        "trilha": 6.0,
+        "direcao_arte": 5.0
+      },
+      "pros": [
+        "Ambientação industrial promissora no prólogo"
+      ],
+      "cons": [
+        "Combate repetitivo e travado",
+        "Progressão desequilibrada após a metade"
+      ],
+      "status": "dropped",
+      "verdict": "Boas ideias visuais prejudicadas por sistemas pouco polidos.",
+      "createdAt": "2026-10-12T20:10:00.000Z",
+      "updatedAt": "2026-10-12T20:10:00.000Z"
+    }
+  ]
+}

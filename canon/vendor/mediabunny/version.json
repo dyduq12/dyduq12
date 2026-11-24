@@ -1,0 +1,6 @@
+{
+  "name": "mediabunny",
+  "version": "1.66.4",
+  "license": "MPL-2.0",
+  "bundle": "dist/bundles/mediabunny.min.mjs"
+}

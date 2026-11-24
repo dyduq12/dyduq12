@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="paper">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CANON — Curadoria Editorial</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/card.css">
+  <link rel="stylesheet" href="css/studio.css">
+</head>
+<body>
+  <div class="canon-shell">
+    <noscript>
+      <p class="canon-noscript" role="alert">
+        O CANON é uma aplicação 100% client-side em JavaScript. Ative o JavaScript no navegador para gerenciar seu acervo, buscar obras e exportar pôsteres ou vídeos.
+      </p>
+    </noscript>
+    <header class="canon-header">
+      <div class="canon-brand-group">
+        <h1 class="canon-brand-title">CANON</h1>
+        <p class="canon-brand-subtitle">Câmara de curadoria editorial — Jogos, Filmes, Séries e Animes</p>
+        <p id="backup-info" class="canon-backup-meta">Último backup: ainda não exportado</p>
+        <p id="persist-info" class="canon-backup-meta" hidden></p>
+      </div>
+
+      <div class="canon-header-actions">
+        <button id="theme-toggle-btn" type="button" aria-pressed="false">Tema: Papel Fosco</button>
+        <button id="export-btn" type="button">Exportar canon.json</button>
+        <label for="import-input" class="canon-file-label">Importar canon.json</label>
+        <input id="import-input" class="canon-sr-only" type="file" accept="application/json,.json">
+      </div>
+    </header>
+
+    <div id="backup-reminder" class="canon-backup-reminder" role="status" hidden></div>
+
+    <div class="canon-mascot-dock" data-mascot-dock aria-hidden="true"></div>
+
+    <main class="canon-main-grid">
+      <section id="gallery-panel" class="canon-panel" aria-label="Galeria do acervo"></section>
+      <section id="form-panel" class="canon-panel" aria-label="Busca e editor de obra"></section>
+    </main>
+
+    <section id="settings-panel" class="canon-panel" aria-label="Configurações"></section>
+
+    <footer class="canon-footer">
+      <p>
+        Metadados fornecidos por:
+        <a href="https://rawg.io/" target="_blank" rel="noopener noreferrer">RAWG</a> |
+        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">TMDB</a> |
+        <a href="https://anilist.co/" target="_blank" rel="noopener noreferrer">AniList</a>
+      </p>
+    </footer>
+  </div>
+
+  <div id="studio-root"></div>
+  <div id="toast-region" class="canon-toast-region"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
