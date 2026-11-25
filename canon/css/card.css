@@ -30,6 +30,14 @@
   transition: transform var(--duration-flip) var(--ease-flip);
 }
 
+/* Narrow phones (360px): a taller card gives 4 bars, 6 pros and 6 cons room before the verdict */
+@media (max-width: 420px) {
+  .canon-card-stage,
+  .canon-card-inner {
+    min-height: 640px;
+  }
+}
+
 .canon-card-shell[data-flipped="true"] .canon-card-inner {
   transform: rotateY(180deg);
 }
@@ -100,6 +108,12 @@
   background-color: color-mix(in srgb, var(--work-a) 6%, var(--color-surface));
   border: 1px solid var(--color-border-strong);
   border-bottom: 0;
+}
+
+/* Read-only preview has no action footer: close the frame on its own */
+.canon-card-shell:has(.canon-card-actions[hidden]) .canon-card-surface {
+  border-bottom: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
 }
 
 .canon-card-face--back .canon-card-surface {
@@ -240,10 +254,11 @@
   box-shadow: var(--shadow-offset-ink);
 }
 
+/* Front base: title, specs and a short flip hint, clear of the dog-ear and folio */
 .canon-card-front-body {
   flex: 1;
   min-height: 0;
-  padding: var(--space-3) var(--space-4) var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -320,6 +335,7 @@
 
 .canon-card-flip-hint {
   margin-top: auto;
+  padding-top: var(--space-2);
   padding-right: 4.5rem;
   font-family: var(--font-mono);
   font-size: var(--text-micro);
@@ -328,17 +344,24 @@
   color: var(--color-text-muted);
 }
 
-/* Back face */
+/* Back face: 4 criteria bars, up to 6 short pros and cons, then the verdict (never squeezed) */
 .canon-card-back-body {
   flex: 1;
   min-height: 0;
-  padding: var(--space-3) var(--space-4) var(--space-4);
+  padding: var(--space-3) var(--space-4) var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
+}
+
+.canon-card-score-banner,
+.canon-card-bars,
+.canon-card-lists,
+.canon-card-verdict {
+  flex-shrink: 0;
 }
 
 .canon-card-score-banner {
@@ -382,13 +405,13 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .canon-card-bar-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: var(--space-1);
   font-size: var(--text-xs);
 }
 
@@ -404,7 +427,7 @@
 
 .canon-card-bar-track {
   position: relative;
-  height: 8px;
+  height: 10px;
   border-radius: var(--radius-none);
   border: 1px solid var(--color-border-strong);
   background-color: var(--color-surface-alt);
@@ -429,7 +452,7 @@
 .canon-card-lists {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-3) var(--space-4);
   font-size: var(--text-xs);
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -492,11 +515,11 @@
 .canon-card-verdict {
   margin: 0;
   margin-top: auto;
-  padding-top: var(--space-2);
+  padding-top: var(--space-3);
   padding-right: 3rem;
   border-top: var(--rule-hair) solid var(--rule-color);
   font-size: 0.8125rem;
-  line-height: 1.4;
+  line-height: 1.45;
   color: var(--color-text);
   overflow-wrap: anywhere;
 }
@@ -505,7 +528,7 @@
 .canon-card-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: stretch;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
@@ -515,30 +538,28 @@
   background-color: var(--color-surface-alt);
 }
 
-.canon-card-source {
-  flex: 1 1 auto;
-  font-family: var(--font-mono);
-  font-size: var(--text-micro);
-  letter-spacing: var(--tracking-micro);
-  text-transform: uppercase;
-  color: var(--color-text-muted);
+.canon-card-actions[hidden] {
+  display: none;
 }
 
+/* Edit, Export poster and Remove share three equal columns */
 .canon-card-btn-group {
-  flex: 1 1 14rem;
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-1);
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
 }
 
 .canon-card-btn-group button {
-  flex: 1 1 auto;
+  min-width: 0;
   padding: var(--space-1) var(--space-2);
   font-family: var(--font-condensed);
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-align: center;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
   border-radius: var(--radius-sm);
   background-color: var(--color-surface);
 }
