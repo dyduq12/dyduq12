@@ -1,22 +1,22 @@
-/* CANON Design Tokens — Central source of truth for themes, typography, spacing, radii, and motion */
+/* CANON Design Tokens - Central source of truth for themes, typography, spacing, radii, motion, press shadows and media inks */
 
 :root,
 [data-theme="paper"] {
-  /* Editorial warm paper (distinct tinted stock, not flat beige) */
-  --color-bg: #F1EBDA;
-  --color-surface: #FAF6EB;
-  --color-surface-alt: #E5DEC9;
-  --color-surface-hover: #DDD4BC;
+  /* Editorial warm paper stock (tinted, never flat) */
+  --color-bg: #EDE4CC;
+  --color-surface: #F8F2E2;
+  --color-surface-alt: #E0D6BA;
+  --color-surface-hover: #D6CBAA;
 
   /* Ink & hierarchy */
-  --color-text: #16202C;
-  --color-text-muted: #465364;
+  --color-text: #121B27;
+  --color-text-muted: #3F4C5C;
 
   /* Borders & accent */
-  --color-border: #C4BBA3;
-  --color-border-strong: #8F856D;
+  --color-border: #BDB293;
+  --color-border-strong: #857A5E;
   --color-accent: #B33927;
-  --color-accent-contrast: #FAF6EB;
+  --color-accent-contrast: #F8F2E2;
   --color-focus: #1F5B8C;
 
   /* Semantic states */
@@ -33,21 +33,49 @@
   --color-card-glow: color-mix(in srgb, var(--work-a) 22%, transparent);
 
   /* Mascot geometry tokens */
-  --mascot-ink: #16202C;
-  --mascot-paper: #FAF6EB;
-  --mascot-surface: #E5DEC9;
+  --mascot-ink: #121B27;
+  --mascot-paper: #F8F2E2;
+  --mascot-surface: #E0D6BA;
   --mascot-accent: #B33927;
   --mascot-glow: #D47420;
   --mascot-crack: #A12020;
 
   /* Procedural SVG noise texture (generated once) */
   --grain-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-  --grain-opacity: 0.045;
+  --grain-opacity: 0.055;
+  --grain-blend: multiply;
 
   /* Shadows & modal backdrop */
-  --color-backdrop: color-mix(in srgb, var(--color-text) 58%, transparent);
-  --shadow-card: 0 10px 24px color-mix(in srgb, var(--color-text) 12%, transparent);
-  --shadow-toast: 0 8px 20px color-mix(in srgb, var(--color-text) 18%, transparent);
+  --color-backdrop: color-mix(in srgb, var(--color-text) 62%, transparent);
+  --shadow-card: 0 10px 24px color-mix(in srgb, var(--color-text) 14%, transparent);
+  --shadow-toast: 0 8px 20px color-mix(in srgb, var(--color-text) 20%, transparent);
+
+  /* Press shadows: hard contact line + soft lift, like stacked paper */
+  --shadow-press-1: 0 1px 0 color-mix(in srgb, var(--color-text) 16%, transparent),
+    0 2px 4px color-mix(in srgb, var(--color-text) 10%, transparent);
+  --shadow-press-2: 0 2px 0 color-mix(in srgb, var(--color-text) 22%, transparent),
+    0 6px 12px color-mix(in srgb, var(--color-text) 14%, transparent),
+    0 14px 28px color-mix(in srgb, var(--color-text) 8%, transparent);
+  --shadow-press-3: 0 3px 0 color-mix(in srgb, var(--color-text) 28%, transparent),
+    0 10px 20px color-mix(in srgb, var(--color-text) 18%, transparent),
+    0 24px 44px color-mix(in srgb, var(--color-text) 12%, transparent);
+  --shadow-inset-paper: inset 0 1px 0 color-mix(in srgb, var(--color-surface) 90%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--color-text) 10%, transparent);
+  --shadow-offset-ink: 3px 3px 0 color-mix(in srgb, var(--color-text) 85%, transparent);
+
+  /* Media inks (AA text contrast on bg and surface) */
+  --ink-koma: #B82A1A;
+  --ink-save: #14704A;
+  --ink-kino: #1D5FA8;
+  --ink-echo: #8F5A05;
+  --ink-koma-contrast: #F8F2E2;
+  --ink-save-contrast: #F8F2E2;
+  --ink-kino-contrast: #F8F2E2;
+  --ink-echo-contrast: #F8F2E2;
+  --ink-koma-wash: color-mix(in srgb, var(--ink-koma) 12%, var(--color-surface));
+  --ink-save-wash: color-mix(in srgb, var(--ink-save) 12%, var(--color-surface));
+  --ink-kino-wash: color-mix(in srgb, var(--ink-kino) 12%, var(--color-surface));
+  --ink-echo-wash: color-mix(in srgb, var(--ink-echo) 12%, var(--color-surface));
 
   /* Typography (system stacks only, zero webfonts) */
   --font-condensed: "Bahnschrift", "DIN Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
@@ -60,6 +88,10 @@
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
   --text-2xl: 1.875rem;
+  --text-display: clamp(2.5rem, 8vw, 5.5rem);
+  --text-micro: 0.625rem;
+  --tracking-micro: 0.14em;
+  --tracking-display: -0.01em;
 
   /* Spacing scale */
   --space-1: 0.25rem;
@@ -69,6 +101,7 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
   --space-7: 3rem;
+  --space-8: 4rem;
 
   /* Radii */
   --radius-none: 0px;
@@ -81,30 +114,38 @@
   --duration-fast: 140ms;
   --duration-base: 240ms;
   --duration-flip: 520ms;
+  --duration-slow: 480ms;
   --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
   --ease-flip: cubic-bezier(0.22, 0.85, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* Layout & touch */
   --touch-min: 44px;
   --container-max: 1200px;
+
+  /* Editorial rules (newspaper hairlines) */
+  --rule-hair: 0.5px;
+  --rule-thick: 3px;
+  --rule-color: var(--color-text);
+  --rule-soft: var(--color-border-strong);
 }
 
 [data-theme="slate"] {
-  /* Nocturnal blue-slate editorial surface */
-  --color-bg: #131B25;
-  --color-surface: #1B2634;
-  --color-surface-alt: #233142;
-  --color-surface-hover: #2B3B4F;
+  /* Nocturnal blue-slate cinematic surface */
+  --color-bg: #0F1620;
+  --color-surface: #18222F;
+  --color-surface-alt: #212E3F;
+  --color-surface-hover: #2A3A50;
 
   /* Light editorial ink on slate */
-  --color-text: #ECE7DA;
-  --color-text-muted: #B0BAC7;
+  --color-text: #EEE9DC;
+  --color-text-muted: #B4BECB;
 
   /* Borders & accent */
-  --color-border: #33455B;
-  --color-border-strong: #536A87;
+  --color-border: #2E4058;
+  --color-border-strong: #5A7391;
   --color-accent: #E26B56;
-  --color-accent-contrast: #131B25;
+  --color-accent-contrast: #0F1620;
   --color-focus: #7CC0F5;
 
   /* Semantic states */
@@ -115,16 +156,53 @@
   --color-warning: #E5AA4E;
   --color-warning-bg: #3A2C16;
 
-  /* Glow & grain adjustments for dark surface */
-  --color-card-glow: color-mix(in srgb, var(--work-b) 24%, transparent);
-  --mascot-ink: #ECE7DA;
-  --mascot-paper: #1B2634;
-  --mascot-surface: #233142;
+  /* Dynamic card palette fallbacks & glow */
+  --work-a: #264653;
+  --work-b: #E76F51;
+  --color-card-glow: color-mix(in srgb, var(--work-b) 26%, transparent);
+
+  /* Mascot geometry tokens */
+  --mascot-ink: #EEE9DC;
+  --mascot-paper: #18222F;
+  --mascot-surface: #212E3F;
   --mascot-accent: #E26B56;
   --mascot-glow: #EEAA4A;
   --mascot-crack: #F08080;
-  --color-backdrop: color-mix(in srgb, var(--color-bg) 78%, transparent);
-  --grain-opacity: 0.06;
-  --shadow-card: 0 12px 28px color-mix(in srgb, var(--color-bg) 55%, transparent);
-  --shadow-toast: 0 10px 24px color-mix(in srgb, var(--color-bg) 65%, transparent);
+
+  /* Grain */
+  --grain-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.78' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  --grain-opacity: 0.07;
+  --grain-blend: soft-light;
+
+  /* Shadows & modal backdrop */
+  --color-backdrop: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  --shadow-card: 0 12px 28px color-mix(in srgb, var(--color-bg) 70%, transparent);
+  --shadow-toast: 0 10px 24px color-mix(in srgb, var(--color-bg) 78%, transparent);
+
+  /* Press shadows: deep contact + rim light on top edge */
+  --shadow-press-1: 0 1px 0 color-mix(in srgb, var(--color-bg) 85%, transparent),
+    0 2px 5px color-mix(in srgb, var(--color-bg) 60%, transparent);
+  --shadow-press-2: 0 2px 0 color-mix(in srgb, var(--color-bg) 90%, transparent),
+    0 8px 16px color-mix(in srgb, var(--color-bg) 65%, transparent),
+    0 18px 34px color-mix(in srgb, var(--color-bg) 45%, transparent);
+  --shadow-press-3: 0 3px 0 color-mix(in srgb, var(--color-bg) 95%, transparent),
+    0 12px 24px color-mix(in srgb, var(--color-bg) 75%, transparent),
+    0 28px 52px color-mix(in srgb, var(--color-bg) 55%, transparent);
+  --shadow-inset-paper: inset 0 1px 0 color-mix(in srgb, var(--color-text) 14%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--color-bg) 70%, transparent);
+  --shadow-offset-ink: 3px 3px 0 color-mix(in srgb, var(--color-bg) 90%, transparent);
+
+  /* Media inks (luminous on slate) */
+  --ink-koma: #F0795F;
+  --ink-save: #4FD08F;
+  --ink-kino: #6DB6F5;
+  --ink-echo: #F2B54A;
+  --ink-koma-contrast: #0F1620;
+  --ink-save-contrast: #0F1620;
+  --ink-kino-contrast: #0F1620;
+  --ink-echo-contrast: #0F1620;
+  --ink-koma-wash: color-mix(in srgb, var(--ink-koma) 16%, var(--color-surface));
+  --ink-save-wash: color-mix(in srgb, var(--ink-save) 16%, var(--color-surface));
+  --ink-kino-wash: color-mix(in srgb, var(--ink-kino) 16%, var(--color-surface));
+  --ink-echo-wash: color-mix(in srgb, var(--ink-echo) 16%, var(--color-surface));
 }
