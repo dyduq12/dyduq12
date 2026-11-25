@@ -15,14 +15,22 @@ export const WORK_STATUSES = Object.freeze([
   'dropped'
 ]);
 
-export const SCORE_KEYS = Object.freeze([
-  'geral',
+/** The 4 active evaluation criteria (each one is a slider in 0,5 steps). */
+export const CRITERIA_KEYS = Object.freeze([
   'historia',
   'gameplay_ritmo',
   'graficos_fotografia',
-  'trilha',
-  'direcao_arte'
+  'trilha'
 ]);
+
+/**
+ * Keys that existed in older records. They are validated only when present
+ * and are never created for new works.
+ */
+export const LEGACY_SCORE_KEYS = Object.freeze(['direcao_arte']);
+
+/** Stored score keys: the automatic overall score plus the 4 active criteria. */
+export const SCORE_KEYS = Object.freeze(['geral', ...CRITERIA_KEYS]);
 
 export const DEFAULT_PALETTE = Object.freeze(['#264653', '#E76F51']);
 
@@ -81,6 +89,7 @@ export function isValidPaletteColor(color) {
 
 /**
  * Checks whether a score is a finite number in [0, 10] with 0.5 increments.
+ * Used by the 4 criteria sliders and by legacy criteria.
  * @param {unknown} value
  * @returns {boolean}
  */
@@ -94,11 +103,61 @@ export function isValidScore(value) {
   return Number.isInteger(value * 2);
 }
 
+/**
+ * Checks whether an overall score is a finite number in [0, 10] with 0.125 increments.
+ * The exact mean of four 0.5-step notes is always a multiple of 0.125,
+ * and older manual overall scores (multiples of 0.5) remain valid.
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+export function isValidGeralScore(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return false;
+  }
+  if (value < 0 || value > 10) {
+    return false;
+  }
+  return Number.isInteger(value * 8);
+}
+
+/**
+ * Computes the overall score as the exact arithmetic mean of the 4 active criteria.
+ * Missing or invalid criteria count as 0. Legacy keys are ignored.
+ * @param {Record<string, unknown> | null | undefined} scores
+ * @returns {number}
+ */
+export function computeGeral(scores) {
+  const source = scores && typeof scores === 'object' ? scores : {};
+  let sum = 0;
+  for (const key of CRITERIA_KEYS) {
+    const value = source[key];
+    sum += typeof value === 'number' && Number.isFinite(value) ? value : 0;
+  }
+  return sum / CRITERIA_KEYS.length;
+}
+
+/**
+ * Returns a copy of `scores` whose `geral` is the exact mean of the 4 active criteria.
+ * @param {Record<string, unknown> | null | undefined} scores
+ * @returns {Record<string, unknown>}
+ */
+export function applyAutoGeral(scores) {
+  const source = scores && typeof scores === 'object' ? scores : {};
+  return { ...source, geral: computeGeral(source) };
+}
+
 function createDefaultScores(overrides = {}) {
+  const source = overrides && typeof overrides === 'object' ? overrides : {};
   const scores = {};
   for (const key of SCORE_KEYS) {
-    const candidate = overrides && typeof overrides === 'object' ? overrides[key] : undefined;
+    const candidate = source[key];
     scores[key] = typeof candidate === 'number' ? candidate : 0;
+  }
+  // Legacy keys are carried over only when an older record already has them.
+  for (const key of LEGACY_SCORE_KEYS) {
+    if (typeof source[key] === 'number') {
+      scores[key] = source[key];
+    }
   }
   return scores;
 }
@@ -274,14 +333,28 @@ export function validateWork(work) {
   }
 
   if (!w.scores || typeof w.scores !== 'object' || Array.isArray(w.scores)) {
-    errors.push({ field: 'scores', message: 'scores deve ser um objeto com os 6 critérios.' });
+    errors.push({ field: 'scores', message: 'scores deve ser um objeto com a nota geral e os 4 critérios.' });
   } else {
     const scores = /** @type {Record<string, unknown>} */ (w.scores);
-    for (const key of SCORE_KEYS) {
+    if (!isValidGeralScore(scores.geral)) {
+      errors.push({
+        field: 'scores.geral',
+        message: 'Nota geral deve estar entre 0 e 10 em passos de 0,125.'
+      });
+    }
+    for (const key of CRITERIA_KEYS) {
       if (!isValidScore(scores[key])) {
         errors.push({
           field: `scores.${key}`,
           message: 'Nota deve estar entre 0 e 10 em passos de 0,5.'
+        });
+      }
+    }
+    for (const key of LEGACY_SCORE_KEYS) {
+      if (scores[key] !== undefined && !isValidScore(scores[key])) {
+        errors.push({
+          field: `scores.${key}`,
+          message: 'Nota legada deve estar entre 0 e 10 em passos de 0,5.'
         });
       }
     }

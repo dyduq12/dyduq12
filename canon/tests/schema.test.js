@@ -5,8 +5,14 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 import {
+  CRITERIA_KEYS,
+  LEGACY_SCORE_KEYS,
   SCHEMA_VERSION,
+  SCORE_KEYS,
+  applyAutoGeral,
+  computeGeral,
   createWork,
+  isValidGeralScore,
   isValidPaletteColor,
   isValidScore,
   isValidWorkId,
@@ -156,6 +162,151 @@ describe('schema.js — validação, migração e mesclagem', () => {
     assert.equal(itemA?.source, 'local');
     assert.equal(itemC?.source, 'local');
     assert.equal(merged.some((w) => w.id === 'tmdb:2'), false);
+  });
+});
+
+describe('schema.js — 4 critérios ativos, nota geral automática e chave legada', () => {
+  it('define os 4 critérios ativos e move Direção de Arte para a lista legada', () => {
+    assert.deepEqual([...CRITERIA_KEYS], ['historia', 'gameplay_ritmo', 'graficos_fotografia', 'trilha']);
+    assert.deepEqual([...SCORE_KEYS], ['geral', ...CRITERIA_KEYS]);
+    assert.deepEqual([...LEGACY_SCORE_KEYS], ['direcao_arte']);
+    assert.equal(SCORE_KEYS.includes('direcao_arte'), false);
+    assert.equal(CRITERIA_KEYS.includes('direcao_arte'), false);
+  });
+
+  it('nunca cria direcao_arte em obras novas nem na migração de registros sem ela', () => {
+    const created = createWork({ title: 'Nova', type: 'game', year: 2026 });
+    assert.deepEqual(Object.keys(created.scores).sort(), [...SCORE_KEYS].sort());
+    assert.equal('direcao_arte' in created.scores, false);
+
+    const migrated = normalizeWork({
+      schemaVersion: 1,
+      id: 'rawg:77',
+      type: 'game',
+      title: 'Sem Legado',
+      year: 2020,
+      cover: null,
+      palette: ['#1D3557', '#E63946'],
+      scores: { geral: 8, historia: 8 },
+      pros: [],
+      cons: [],
+      status: 'planned',
+      verdict: '',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z'
+    });
+    assert.equal('direcao_arte' in migrated.scores, false);
+    assert.equal(migrated.scores.gameplay_ritmo, 0);
+    assert.equal(migrated.scores.trilha, 0);
+    assert.equal(validateWork(migrated).valid, true);
+  });
+
+  it('calcula a nota geral como a média aritmética exata dos 4 critérios ativos', () => {
+    assert.equal(computeGeral({ historia: 9.5, gameplay_ritmo: 8.5, graficos_fotografia: 7, trilha: 10 }), 8.75);
+    assert.equal(computeGeral({ historia: 10, gameplay_ritmo: 10, graficos_fotografia: 10, trilha: 10 }), 10);
+    assert.equal(computeGeral({ historia: 8.5, gameplay_ritmo: 8, graficos_fotografia: 9, trilha: 9.5 }), 8.75);
+    assert.equal(computeGeral({ historia: 9, gameplay_ritmo: 9, graficos_fotografia: 9, trilha: 8.5 }), 8.875);
+
+    assert.equal(computeGeral({}), 0);
+    assert.equal(computeGeral(null), 0);
+    assert.equal(computeGeral({ historia: 8, trilha: 'x', gameplay_ritmo: Number.NaN, graficos_fotografia: 4 }), 3);
+
+    const withLegacy = { historia: 8, gameplay_ritmo: 8, graficos_fotografia: 8, trilha: 8, direcao_arte: 0 };
+    assert.equal(computeGeral(withLegacy), 8);
+    assert.equal(computeGeral({ ...withLegacy, direcao_arte: 10 }), 8);
+
+    const auto = applyAutoGeral({ geral: 1, historia: 9, gameplay_ritmo: 9, graficos_fotografia: 9, trilha: 8.5 });
+    assert.equal(auto.geral, 8.875);
+    assert.equal(auto.historia, 9);
+  });
+
+  it('aceita a nota geral em múltiplos de 0,125 e mantém os critérios em passos de 0,5', () => {
+    assert.equal(isValidGeralScore(8.875), true);
+    assert.equal(isValidGeralScore(8.75), true);
+    assert.equal(isValidGeralScore(8.625), true);
+    assert.equal(isValidGeralScore(8.5), true);
+    assert.equal(isValidGeralScore(0), true);
+    assert.equal(isValidGeralScore(10), true);
+    assert.equal(isValidGeralScore(8.9), false);
+    assert.equal(isValidGeralScore(7.3), false);
+    assert.equal(isValidGeralScore(-0.125), false);
+    assert.equal(isValidGeralScore(10.125), false);
+    assert.equal(isValidGeralScore('8.5'), false);
+    assert.equal(isValidGeralScore(Number.NaN), false);
+
+    assert.equal(isValidScore(8.875), false);
+    assert.equal(isValidScore(8.5), true);
+
+    const exact = createWork({
+      title: 'Média Exata',
+      scores: { geral: 8.875, historia: 9, gameplay_ritmo: 9, graficos_fotografia: 9, trilha: 8.5 }
+    });
+    assert.equal(validateWork(exact).valid, true);
+
+    const roundedWrongly = createWork({
+      title: 'Média Arredondada',
+      scores: { geral: 8.9, historia: 9, gameplay_ritmo: 9, graficos_fotografia: 9, trilha: 8.5 }
+    });
+    const result = validateWork(roundedWrongly);
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some((e) => e.field === 'scores.geral'));
+
+    const criterionWithEighth = createWork({
+      title: 'Critério Inválido',
+      scores: { geral: 8, historia: 8.125 }
+    });
+    assert.ok(validateWork(criterionWithEighth).errors.some((e) => e.field === 'scores.historia'));
+  });
+
+  it('toda combinação de 4 notas em passos de 0,5 gera uma nota geral válida', () => {
+    const steps = Array.from({ length: 21 }, (_, i) => i / 2);
+    for (const historia of steps) {
+      for (const gameplay of steps) {
+        for (const graficos of steps) {
+          for (const trilha of steps) {
+            const geral = computeGeral({
+              historia,
+              gameplay_ritmo: gameplay,
+              graficos_fotografia: graficos,
+              trilha
+            });
+            if (!isValidGeralScore(geral)) {
+              assert.fail(`Geral inválida para ${historia}/${gameplay}/${graficos}/${trilha}: ${geral}`);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it('mantém retrocompatibilidade com obras antigas que ainda contêm direcao_arte', () => {
+    const oldScores = {
+      geral: 9.0,
+      historia: 9.5,
+      gameplay_ritmo: 8.0,
+      graficos_fotografia: 10,
+      trilha: 7.5,
+      direcao_arte: 8.5
+    };
+
+    const old = createWork({ title: 'Obra Antiga', type: 'movie', year: 2001, scores: oldScores });
+    assert.equal(old.scores.direcao_arte, 8.5);
+    assert.equal(validateWork(old).valid, true);
+
+    const normalized = normalizeWork({ ...old, schemaVersion: 1 });
+    assert.equal(normalized.scores.direcao_arte, 8.5);
+    assert.equal(validateWork(normalized).valid, true);
+
+    const invalidLegacy = createWork({
+      title: 'Legado Inválido',
+      scores: { ...oldScores, direcao_arte: 7.3 }
+    });
+    const result = validateWork(invalidLegacy);
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some((e) => e.field === 'scores.direcao_arte'));
+
+    const absent = createWork({ title: 'Sem Legado', scores: { geral: 7, historia: 7 } });
+    assert.equal(validateWork(absent).valid, true);
   });
 });
 
