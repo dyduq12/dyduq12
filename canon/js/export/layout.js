@@ -18,9 +18,9 @@ export const VIDEO_SAFE_BOTTOM = 250;
 const INNER_WIDTH = POSTER_WIDTH - POSTER_MARGIN * 2;
 const VIDEO_INNER_WIDTH = VIDEO_WIDTH - VIDEO_MARGIN * 2;
 const DEFAULT_FONTS = Object.freeze({
-  condensed: '"Bahnschrift", "DIN Condensed", "Arial Narrow", system-ui, sans-serif',
-  body: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-  mono: 'ui-monospace, "Cascadia Code", Menlo, Consolas, monospace'
+  condensed: '"Big Shoulders Display", "Bahnschrift", "DIN Condensed", "Arial Narrow", system-ui, sans-serif',
+  body: '"Source Serif 4", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+  mono: '"IBM Plex Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace'
 });
 
 function sanitizeMeasureFn(measure) {
@@ -28,6 +28,17 @@ function sanitizeMeasureFn(measure) {
     return measure;
   }
   return (text, fontSize) => String(text || '').length * fontSize * 0.56;
+}
+
+/**
+ * Splits `count` criteria rows (4 active criteria) inside `areaHeight` with `count - 1` gaps between rows.
+ * @param {number} areaHeight
+ * @param {number} count
+ * @param {number} rowGap
+ */
+function computeBarRowHeight(areaHeight, count, rowGap) {
+  const rows = Math.max(1, count);
+  return Math.max(0, Math.floor((areaHeight - rowGap * (rows - 1)) / rows));
 }
 
 function splitLongToken(token, measure, fontSpec, fontSize, maxWidth) {
@@ -384,8 +395,9 @@ export function computePosterLayout(work, options = {}) {
     height: barsBottom - 840
   };
 
+  // 4 criteria rows with 3 gaps between them
   const rowGap = 10;
-  const barRowHeight = Math.floor((barsRect.height - rowGap * 4) / 5);
+  const barRowHeight = computeBarRowHeight(barsRect.height, model.criteriaBars.length, rowGap);
   const bars = model.criteriaBars.map((bar, index) => ({
     ...bar,
     x: barsRect.x,
@@ -591,8 +603,9 @@ export function computeVideoLayout(work, options = {}) {
     height: Math.max(260, Math.min(356, barsBottom - barsTop))
   };
 
+  // 4 criteria rows with 3 gaps between them
   const rowGap = 12;
-  const barRowHeight = Math.floor((barsRect.height - rowGap * 4) / 5);
+  const barRowHeight = computeBarRowHeight(barsRect.height, model.criteriaBars.length, rowGap);
   const bars = model.criteriaBars.map((bar, index) => ({
     ...bar,
     x: barsRect.x,

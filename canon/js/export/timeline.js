@@ -9,6 +9,10 @@ import { HALL_OF_FAME_THRESHOLD, buildCardModel } from '../ui/card-model.js';
 
 export const VIDEO_DURATION_SEC = 7.0;
 
+const BAR_START_SEC = 1.0;
+const BAR_STEP_SEC = 0.85;
+const BAR_SPAN_SEC = 0.85;
+
 function clamp01(value) {
   if (!Number.isFinite(value)) {
     return 0;
@@ -40,8 +44,8 @@ function roundTime(t) {
  * Builds a deterministic, read-only timeline for a CANON work.
  * Structure scaled smoothly to `duration` (default 7.0 s):
  * - 0.0..1.0 s: intro (cover, title, tech specs) + shutter sound
- * - 1.0..5.0 s: progressive fill of the 5 criteria bars + synced ticks
- * - 5.0..7.0 s: overall score, KOMA snap, ECHO tone, Hall of Fame crystal chord (>= 9.0), verdict
+ * - 1.0..4.45 s: progressive fill of the 4 criteria bars + synced ticks
+ * - 5.0..7.0 s: overall score, KOMA snap, ECHO tone (Story + Soundtrack), Hall of Fame crystal chord (>= 9.0), verdict
  *
  * @param {Record<string, any>} work
  * @param {{ durationSec?: number }} [options]
@@ -60,8 +64,8 @@ export function buildTimeline(work, options = {}) {
     : [...DEFAULT_PALETTE];
 
   const barWindows = model.criteriaBars.map((bar, index) => {
-    const start = (1.0 + index * 0.65) * scale;
-    const end = (1.85 + index * 0.65) * scale;
+    const start = (BAR_START_SEC + index * BAR_STEP_SEC) * scale;
+    const end = (BAR_START_SEC + BAR_SPAN_SEC + index * BAR_STEP_SEC) * scale;
     return {
       key: bar.key,
       label: bar.label,
@@ -100,10 +104,11 @@ export function buildTimeline(work, options = {}) {
     params: {}
   });
 
+  // ECHO reacts only to Story and Soundtrack (the combo needs both at 10).
+  const historiaBar = barWindows.find((b) => b.key === 'historia');
   const trilhaBar = barWindows.find((b) => b.key === 'trilha');
-  const arteBar = barWindows.find((b) => b.key === 'direcao_arte');
   const echoToneScore = Math.round(
-    (((trilhaBar?.targetScore ?? geralScore) + (arteBar?.targetScore ?? geralScore)) / 2) * 10
+    (((historiaBar?.targetScore ?? geralScore) + (trilhaBar?.targetScore ?? geralScore)) / 2) * 10
   ) / 10;
 
   rawEvents.push({

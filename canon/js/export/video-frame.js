@@ -1,9 +1,11 @@
 /**
  * Frame-by-frame 1080x1920 vertical story renderer for MP4 video export.
  * Reuses safe cover loading (R2), seeded grain, theme normalization, and mascot world drawing.
+ * Renders the 4 active criteria (no legacy art-direction bar) with the editorial font stacks from the layout.
  * Zero unseeded randomness, zero wall clocks, zero DOM string injection, zero literal colors.
  */
 
+import { CRITERIA_KEYS } from '../core/schema.js';
 import {
   FIXED_DT,
   advance,
@@ -21,6 +23,7 @@ import {
 } from './poster.js';
 
 const GRAIN_SEED_VIDEO = 2026;
+const INITIAL_GERAL_SCORE = 5.5;
 
 function finiteOr(value, fallback = 0) {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -32,18 +35,21 @@ function clamp01(value) {
 
 /**
  * Creates the deterministic mascot world configured for video export.
+ * Only the 4 active criteria feed the mascots; legacy keys stored on older works are ignored.
  * @param {Record<string, any>} work
  * @param {string[]} [palette]
  */
 export function createVideoMascotWorld(work, palette) {
   const world = createWorld({ seed: GRAIN_SEED_VIDEO });
+  const scores = {};
+  for (const key of CRITERIA_KEYS) {
+    scores[key] = finiteOr(work?.scores?.[key], 0);
+  }
+  scores.geral = INITIAL_GERAL_SCORE;
   setInputs(world, {
     contextKind: 'video',
     title: work?.title || '',
-    scores: {
-      ...(work?.scores || {}),
-      geral: 5.5
-    },
+    scores,
     palette: palette ?? work?.palette
   });
   return world;
@@ -313,22 +319,23 @@ function drawVideoCriteriaBars(ctx, layout, theme, state) {
   ctx.save();
   for (let i = 0; i < layout.bars.length; i += 1) {
     const bar = layout.bars[i];
-    const anim = animatedBars[i];
+    // Match animation rows by key so the 4 active criteria stay aligned even if the order ever differs.
+    const anim = animatedBars.find((item) => item?.key === bar.key) || animatedBars[i];
     const ratio = anim ? clamp01(anim.ratio) : clamp01(finiteOr(bar.percent, 0) / 100);
     const currentScore = anim ? Math.max(0, Math.min(10, finiteOr(anim.currentScore, 0))) : finiteOr(bar.score, 0);
 
-    const labelY = bar.y + 2;
-    const trackY = bar.y + 24;
-    const trackH = Math.max(12, Math.min(16, bar.height - 28));
+    const labelY = bar.y + 4;
+    const trackY = bar.y + 34;
+    const trackH = Math.max(12, Math.min(18, bar.height - 40));
 
     ctx.fillStyle = theme.text;
-    ctx.font = `600 18px ${theme.fonts.body}`;
+    ctx.font = `600 20px ${theme.fonts.body}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(bar.label, bar.x, labelY);
 
     ctx.fillStyle = theme.text;
-    ctx.font = `700 18px ${theme.fonts.mono}`;
+    ctx.font = `700 20px ${theme.fonts.mono}`;
     ctx.textAlign = 'right';
     ctx.fillText(currentScore.toFixed(1), bar.x + bar.width, labelY);
 
