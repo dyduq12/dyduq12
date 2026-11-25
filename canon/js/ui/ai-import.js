@@ -1,6 +1,7 @@
 /**
  * "Colar da IA" UI panel: prompt copy (with iOS-friendly manual fallback),
- * block parsing, read-only card preview, resilient API metadata search, and form pre-fill.
+ * block parsing, read-only card preview, optional cover/metadata search, and form pre-fill.
+ * The AI scores 4 criteria; the overall score (Nota Geral) is computed automatically as their mean.
  */
 
 import { mergeAiWithApi } from '../ai/import-merge.js';
@@ -10,18 +11,16 @@ import { createCoverPreviewUrl, fetchAndStoreCover } from '../media/cover.js';
 import { createWorkCard } from './card.js';
 import { formatUserError, presentErrorToast } from './errors.js';
 
-const PREVIEW_FIELD_LABELS = [
-  ['title', 'Título'],
-  ['type', 'Tipo'],
-  ['year', 'Ano'],
-  ['genre', 'Gênero'],
-  ['studio', 'Estúdio / Dev'],
-  ['director', 'Direção'],
-  ['soundtrack', 'Trilha'],
-  ['starring', 'Elenco / Criadores'],
-  ['status', 'Status'],
-  ['verdict', 'Veredito']
-];
+const TYPE_LABELS = {
+  game: 'Jogo',
+  movie: 'Filme',
+  series: 'Série',
+  anime: 'Anime'
+};
+
+function formatGeral(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(1).replace('.', ',') : '';
+}
 
 function renderMessagesList(ulEl, messages) {
   ulEl.replaceChildren();
@@ -58,7 +57,7 @@ export function mountAiImportPanel(container, deps) {
   const intro = document.createElement('p');
   intro.className = 'canon-brand-subtitle';
   intro.textContent =
-    'Copie o prompt padrão, cole a resposta JSON da IA abaixo, revise a prévia e enriqueça os metadados antes de salvar.';
+    'Copie o prompt, cole a resposta da IA e revise a prévia. A IA avalia 4 critérios (História, Gameplay/Ritmo, Gráficos/Fotografia e Trilha Sonora) e a Nota Geral é calculada automaticamente pela média.';
 
   // --- COPY PROMPT + FALLBACK TEXTAREA ---
   const copyRow = document.createElement('div');
@@ -66,7 +65,7 @@ export function mountAiImportPanel(container, deps) {
 
   const copyPromptBtn = document.createElement('button');
   copyPromptBtn.type = 'button';
-  copyPromptBtn.textContent = 'Copiar prompt padrão';
+  copyPromptBtn.textContent = 'Copiar prompt';
   copyPromptBtn.setAttribute('aria-expanded', 'false');
   copyPromptBtn.setAttribute('aria-controls', 'ai-prompt-fallback-box');
 
@@ -98,12 +97,12 @@ export function mountAiImportPanel(container, deps) {
 
   const pasteLabel = document.createElement('label');
   pasteLabel.htmlFor = 'ai-paste-input';
-  pasteLabel.textContent = 'Resposta da IA (bloco JSON ou texto contendo JSON)';
+  pasteLabel.textContent = 'Resposta da IA';
 
   const pasteTextarea = document.createElement('textarea');
   pasteTextarea.id = 'ai-paste-input';
   pasteTextarea.rows = 6;
-  pasteTextarea.placeholder = 'Cole aqui a resposta da IA...';
+  pasteTextarea.placeholder = 'Cole aqui a resposta da IA…';
 
   pasteField.append(pasteLabel, pasteTextarea);
 
@@ -113,7 +112,7 @@ export function mountAiImportPanel(container, deps) {
   const parseBtn = document.createElement('button');
   parseBtn.type = 'button';
   parseBtn.dataset.variant = 'primary';
-  parseBtn.textContent = 'Ler bloco';
+  parseBtn.textContent = 'Ler resposta';
 
   const clearPasteBtn = document.createElement('button');
   clearPasteBtn.type = 'button';
@@ -139,7 +138,7 @@ export function mountAiImportPanel(container, deps) {
 
   const previewTitle = document.createElement('h3');
   previewTitle.className = 'canon-panel-title';
-  previewTitle.textContent = 'Prévia da importação';
+  previewTitle.textContent = 'Prévia';
 
   const previewGrid = document.createElement('div');
   previewGrid.className = 'canon-ai-preview-grid';
@@ -147,28 +146,24 @@ export function mountAiImportPanel(container, deps) {
   const previewCardList = document.createElement('ul');
   previewCardList.className = 'canon-ai-preview-list';
 
-  const originWrap = document.createElement('div');
-  originWrap.className = 'canon-field';
-  const originHeading = document.createElement('strong');
-  originHeading.textContent = 'Origem dos campos';
-  const originList = document.createElement('ul');
-  originList.className = 'canon-ai-origin-list';
-  originWrap.append(originHeading, originList);
+  previewGrid.append(previewCardList);
 
-  previewGrid.append(previewCardList, originWrap);
+  const previewNote = document.createElement('p');
+  previewNote.className = 'canon-brand-subtitle';
 
   const metaActions = document.createElement('div');
   metaActions.className = 'canon-form-actions';
 
   const fetchMetaBtn = document.createElement('button');
   fetchMetaBtn.type = 'button';
-  fetchMetaBtn.textContent = 'Buscar metadados';
+  fetchMetaBtn.textContent = 'Buscar capa e dados';
 
-  const skipMetaBtn = document.createElement('button');
-  skipMetaBtn.type = 'button';
-  skipMetaBtn.textContent = 'Continuar sem metadados';
+  const applyBtn = document.createElement('button');
+  applyBtn.type = 'button';
+  applyBtn.dataset.variant = 'primary';
+  applyBtn.textContent = 'Aplicar ao formulário';
 
-  metaActions.append(fetchMetaBtn, skipMetaBtn);
+  metaActions.append(fetchMetaBtn, applyBtn);
 
   const metaStatus = document.createElement('p');
   metaStatus.className = 'canon-brand-subtitle';
@@ -177,7 +172,7 @@ export function mountAiImportPanel(container, deps) {
   const metaResultsList = document.createElement('ul');
   metaResultsList.className = 'canon-results-list';
 
-  previewBox.append(previewTitle, previewGrid, metaActions, metaStatus, metaResultsList);
+  previewBox.append(previewTitle, previewGrid, previewNote, metaActions, metaStatus, metaResultsList);
 
   container.append(
     heading,
@@ -198,32 +193,19 @@ export function mountAiImportPanel(container, deps) {
     }
   }
 
-  function renderOriginSummary(work, emptyFields = [], filledFromApi = []) {
-    const emptySet = new Set(emptyFields);
-    const apiSet = new Set(filledFromApi);
-    originList.replaceChildren();
-
-    for (const [key, label] of PREVIEW_FIELD_LABELS) {
-      const li = document.createElement('li');
-      const val = work?.[key];
-      const isEmpty = emptySet.has(key) || val === undefined || val === null || String(val).trim() === '';
-      let origin = 'IA';
-      if (apiSet.has(key)) {
-        origin = 'API';
-      } else if (isEmpty) {
-        origin = 'Faltando';
-      }
-      const displayVal = isEmpty ? '—' : String(val);
-      li.textContent = `${label}: ${displayVal} [${origin}]`;
-      originList.appendChild(li);
+  function describePreviewNote(work, missingCount) {
+    const parts = [];
+    const geral = formatGeral(work?.scores?.geral);
+    if (geral) {
+      parts.push(`Nota Geral ${geral} (média dos 4 critérios)`);
     }
-
-    const scoresLi = document.createElement('li');
-    scoresLi.textContent = `Notas (6 critérios): preenchidas [IA]`;
-    originList.appendChild(scoresLi);
+    if (missingCount > 0) {
+      parts.push(`${missingCount} campo(s) sem dados; busque capa e dados para completar`);
+    }
+    return parts.join(' · ');
   }
 
-  async function renderPreview(work, emptyFields = [], filledFromApi = []) {
+  async function renderPreview(work, missingCount = 0) {
     activePreviewCard?.destroy?.();
     activePreviewCard = null;
     revokePreviewCover();
@@ -239,7 +221,7 @@ export function mountAiImportPanel(container, deps) {
     });
     activePreviewCard = card;
     previewCardList.appendChild(card);
-    renderOriginSummary(work, emptyFields, filledFromApi);
+    previewNote.textContent = describePreviewNote(work, missingCount);
     previewBox.hidden = false;
   }
 
@@ -261,7 +243,7 @@ export function mountAiImportPanel(container, deps) {
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
       try {
         await navigator.clipboard.writeText(promptText);
-        deps.toast.success('Prompt padrão copiado para a área de transferência.');
+        deps.toast.success('Prompt copiado.');
         return;
       } catch (err) {
         console.warn('[ai-import] Clipboard falhou; abrindo fallback manual:', { message: err?.message });
@@ -286,6 +268,7 @@ export function mountAiImportPanel(container, deps) {
     pasteTextarea.value = '';
     renderMessagesList(errorsList, []);
     renderMessagesList(warningsList, []);
+    previewNote.textContent = '';
     metaStatus.textContent = '';
     metaResultsList.replaceChildren();
     previewBox.hidden = true;
@@ -306,15 +289,15 @@ export function mountAiImportPanel(container, deps) {
       if (!parsed.ok || !parsed.work) {
         currentParsed = null;
         previewBox.hidden = true;
-        deps.toast.error('Não foi possível importar o bloco. Veja os erros listados.');
+        deps.toast.error('Não foi possível importar a resposta. Veja os erros listados.');
         return;
       }
 
       currentParsed = parsed;
-      await renderPreview(parsed.work, parsed.emptyFields, []);
-      deps.toast.success('Bloco validado! Revise a prévia e busque metadados ou continue.');
+      await renderPreview(parsed.work, parsed.emptyFields.length);
+      deps.toast.success('Resposta validada! Revise a prévia, busque a capa ou aplique ao formulário.');
     } catch (err) {
-      presentErrorToast(deps.toast, err, { context: 'Ler bloco da IA' });
+      presentErrorToast(deps.toast, err, { context: 'Ler resposta da IA' });
     }
   });
 
@@ -323,7 +306,7 @@ export function mountAiImportPanel(container, deps) {
       return;
     }
     metaResultsList.replaceChildren();
-    metaStatus.textContent = `Buscando "${currentParsed.work.title}" (${currentParsed.work.type})...`;
+    metaStatus.textContent = `Buscando "${currentParsed.work.title}"...`;
 
     const response = await deps.searchService.search(
       currentParsed.work.title,
@@ -341,23 +324,23 @@ export function mountAiImportPanel(container, deps) {
               : 'tmdb'
       });
       const msg = formatted.message || response.error?.message || 'Busca indisponível no momento.';
-      metaStatus.textContent = `${msg} Suas notas foram preservadas; clique em "Continuar sem metadados".`;
+      metaStatus.textContent = `${msg} Suas notas foram preservadas; use "Aplicar ao formulário".`;
       deps.toast.warning(`${msg} Notas preservadas.`);
       return;
     }
 
     if (!response.results || response.results.length === 0) {
-      metaStatus.textContent = 'Nenhum resultado encontrado na API. Suas notas foram preservadas.';
+      metaStatus.textContent = 'Nada encontrado nas APIs. Suas notas foram preservadas.';
       return;
     }
 
-    metaStatus.textContent = `${response.results.length} resultado(s) encontrado(s). Escolha um para mesclar:`;
+    metaStatus.textContent = `${response.results.length} resultado(s). Escolha um para mesclar:`;
     for (const item of response.results) {
       const li = document.createElement('li');
       li.className = 'canon-result-item';
 
       const text = document.createElement('span');
-      const parts = [item.title, `(${item.year})`, `[${item.type}]`];
+      const parts = [item.title, `(${item.year})`, '·', TYPE_LABELS[item.type] || item.type];
       if (item.studio) {
         parts.push(`— ${item.studio}`);
       }
@@ -365,13 +348,14 @@ export function mountAiImportPanel(container, deps) {
 
       const chooseBtn = document.createElement('button');
       chooseBtn.type = 'button';
-      chooseBtn.textContent = 'Aplicar resultado';
+      chooseBtn.textContent = 'Usar';
+      chooseBtn.setAttribute('aria-label', `Usar ${item.title}`);
       chooseBtn.addEventListener('click', async () => {
         if (!currentParsed?.work) {
           return;
         }
         try {
-          metaStatus.textContent = `Mesclando metadados de "${item.title}"...`;
+          metaStatus.textContent = `Mesclando "${item.title}"...`;
           const resolved = await deps.searchService.resolveResultDetails(item);
           const detailedItem = resolved.item || item;
           if (resolved.warning) {
@@ -397,12 +381,12 @@ export function mountAiImportPanel(container, deps) {
           }
 
           const remainingEmpty = currentParsed.emptyFields.filter((f) => !filled.includes(f));
-          await renderPreview(finalWork, remainingEmpty, filled);
+          await renderPreview(finalWork, remainingEmpty.length);
           await deps.onApplyToForm(finalWork, { filledFromApi: filled });
-          metaStatus.textContent = 'Metadados mesclados no formulário abaixo. Revise e clique em "Salvar obra".';
-          deps.toast.info('Formulário pré-preenchido para revisão (não salvo automaticamente).');
+          metaStatus.textContent = 'Dados mesclados no formulário. Revise e clique em "Salvar obra".';
+          deps.toast.info('Formulário preenchido para revisão (não salvo automaticamente).');
         } catch (err) {
-          presentErrorToast(deps.toast, err, { context: 'Aplicar metadados da API' });
+          presentErrorToast(deps.toast, err, { context: 'Aplicar dados da API' });
         }
       });
 
@@ -411,15 +395,15 @@ export function mountAiImportPanel(container, deps) {
     }
   });
 
-  skipMetaBtn.addEventListener('click', async () => {
+  applyBtn.addEventListener('click', async () => {
     if (!currentParsed?.work) {
       return;
     }
     try {
       await deps.onApplyToForm(currentParsed.work, { filledFromApi: [] });
-      deps.toast.info('Dados da IA aplicados no formulário para revisão (não salvo automaticamente).');
+      deps.toast.info('Dados da IA aplicados ao formulário para revisão (não salvo automaticamente).');
     } catch (err) {
-      presentErrorToast(deps.toast, err, { context: 'Aplicar bloco no formulário' });
+      presentErrorToast(deps.toast, err, { context: 'Aplicar resposta ao formulário' });
     }
   });
 

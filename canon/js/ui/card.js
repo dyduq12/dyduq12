@@ -6,6 +6,7 @@
 import { buildCardModel } from './card-model.js';
 
 const FLIP_MOVE_TOLERANCE_PX = 10;
+const FRONT_FLIP_HINT = 'Virar pôster';
 
 function buildSpecList(techSpecs) {
   const dl = document.createElement('dl');
@@ -146,7 +147,7 @@ export function createWorkCard(work, options = {}) {
 
   const frontHint = document.createElement('span');
   frontHint.className = 'canon-card-flip-hint';
-  frontHint.textContent = `Nota ${model.geralFormatted} · Toque ou Enter para ver verso`;
+  frontHint.textContent = `Nota ${model.geralFormatted} · ${FRONT_FLIP_HINT}`;
 
   frontBody.append(titleRow, specsList, frontHint);
   frontFlipBtn.append(poster, frontBody);
@@ -213,12 +214,9 @@ export function createWorkCard(work, options = {}) {
   actionsBar.className = 'canon-card-actions';
   actionsBar.dataset.noFlip = 'true';
 
-  const sourceTag = document.createElement('span');
-  sourceTag.className = 'canon-card-source';
-  sourceTag.textContent = options.readOnly ? '[prévia]' : `[${model.sourceLabel}]`;
-  actionsBar.appendChild(sourceTag);
-
-  if (!options.readOnly) {
+  if (options.readOnly) {
+    actionsBar.hidden = true;
+  } else {
     const btnGroup = document.createElement('div');
     btnGroup.className = 'canon-card-btn-group';
 
