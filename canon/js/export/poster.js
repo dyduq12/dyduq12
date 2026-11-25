@@ -3,10 +3,11 @@
  * Strict R2 protection: draws ONLY same-origin cover Blobs (IndexedDB `covers` or relative `covers/`),
  * resolves all colors and concrete font stacks from `theme`, uses deterministic seeded grain,
  * wraps `canvas.toBlob` with timeout & SecurityError handling, and reuses `drawWorld` for mascots.
+ * Waits for the editorial web fonts (when a DOM exists) and renders only the 4 active criteria.
  */
 
 import { STORES } from '../core/db.js';
-import { DEFAULT_PALETTE } from '../core/schema.js';
+import { CRITERIA_KEYS, DEFAULT_PALETTE } from '../core/schema.js';
 import {
   FIXED_DT,
   advance,
@@ -20,6 +21,37 @@ import { POSTER_HEIGHT, POSTER_WIDTH, computePosterLayout, resolvePosterFonts } 
 const DEFAULT_TOBLOB_TIMEOUT_MS = 8000;
 const MASCOT_PREROLL_STEPS = 20;
 const GRAIN_POINT_COUNT = 1600;
+
+// Weights match the canvas drawing code (titles, mono labels, serif body and verdict).
+const EDITORIAL_FONT_SPECS = Object.freeze([
+  '800 48px "Big Shoulders Display"',
+  '700 18px "IBM Plex Mono"',
+  '600 20px "Source Serif 4"',
+  '500 22px "Source Serif 4"'
+]);
+
+/**
+ * Waits for the editorial fonts before any text is measured or drawn on a canvas.
+ * Safe in Node and other environments without a DOM: resolves `false` when `document.fonts` is missing.
+ * Never rejects; a font that fails to load simply falls back to the stack defined in the layout.
+ * @param {Document} [doc]
+ * @returns {Promise<boolean>}
+ */
+export async function ensureEditorialFonts(doc = globalThis.document) {
+  const fontSet = doc && doc.fonts;
+  if (!fontSet || typeof fontSet.load !== 'function') {
+    return false;
+  }
+  try {
+    await Promise.all(EDITORIAL_FONT_SPECS.map((spec) => fontSet.load(spec)));
+    if (fontSet.ready && typeof fontSet.ready.then === 'function') {
+      await fontSet.ready;
+    }
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
 
 /**
  * Typed error for PNG poster rendering/encoding failures.
@@ -78,6 +110,18 @@ export function normalizePosterTheme(theme, palette) {
   const accentContrast = safe.accentContrast || surface;
   const grainAlpha = Math.max(0.01, Math.min(0.15, finiteOr(safe.grainAlpha, 0.045)));
 
+  const mascotInput = safe.mascot && typeof safe.mascot === 'object' ? safe.mascot : {};
+  const mascotAccent = mascotInput.accent || accent;
+  // Individual mascot inks: accept both `inkKoma` and the engine alias `komaInk`, falling back to the accent.
+  const inkFor = (id) => {
+    const cap = id.charAt(0).toUpperCase() + id.slice(1);
+    return mascotInput[`ink${cap}`] || mascotInput[`${id}Ink`] || mascotAccent;
+  };
+  const inkKoma = inkFor('koma');
+  const inkSave = inkFor('save');
+  const inkKino = inkFor('kino');
+  const inkEcho = inkFor('echo');
+
   return {
     id: safe.id === 'slate' ? 'slate' : 'paper',
     bg,
@@ -94,12 +138,20 @@ export function normalizePosterTheme(theme, palette) {
     grainAlpha,
     fonts: resolvePosterFonts(safe.fonts),
     mascot: {
-      ink: safe.mascot?.ink || text,
-      paper: safe.mascot?.paper || surface,
-      surface: safe.mascot?.surface || surfaceAlt,
-      accent: safe.mascot?.accent || accent,
-      glow: safe.mascot?.glow || fallbackB,
-      crack: safe.mascot?.crack || accent,
+      ink: mascotInput.ink || text,
+      paper: mascotInput.paper || surface,
+      surface: mascotInput.surface || surfaceAlt,
+      accent: mascotAccent,
+      glow: mascotInput.glow || fallbackB,
+      crack: mascotInput.crack || accent,
+      inkKoma,
+      inkSave,
+      inkKino,
+      inkEcho,
+      komaInk: inkKoma,
+      saveInk: inkSave,
+      kinoInk: inkKino,
+      echoInk: inkEcho,
       workA: fallbackA,
       workB: fallbackB
     }
@@ -324,23 +376,24 @@ function drawScoreAndVerdictSection(ctx, layout, theme) {
   ctx.restore();
 }
 
+// Draws the 4 active criteria rows computed by the layout (one row per `layout.bars` entry).
 function drawCriteriaBarsSection(ctx, layout, theme) {
   ctx.save();
   for (let i = 0; i < layout.bars.length; i += 1) {
     const bar = layout.bars[i];
     const ratio = Math.max(0, Math.min(1, finiteOr(bar.percent, 0) / 100));
-    const labelY = bar.y + 2;
-    const trackY = bar.y + 22;
-    const trackH = Math.max(10, Math.min(14, bar.height - 24));
+    const labelY = bar.y + 4;
+    const trackY = bar.y + 28;
+    const trackH = Math.max(10, Math.min(16, bar.height - 32));
 
     ctx.fillStyle = theme.text;
-    ctx.font = `600 17px ${theme.fonts.body}`;
+    ctx.font = `600 19px ${theme.fonts.body}`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(bar.label, bar.x, labelY);
 
     ctx.fillStyle = theme.text;
-    ctx.font = `700 17px ${theme.fonts.mono}`;
+    ctx.font = `700 19px ${theme.fonts.mono}`;
     ctx.textAlign = 'right';
     ctx.fillText(bar.scoreFormatted, bar.x + bar.width, labelY);
 
@@ -621,14 +674,21 @@ function encodeCanvasToPngBlob(canvas, timeoutMs = DEFAULT_TOBLOB_TIMEOUT_MS) {
   });
 }
 
+// Only the 4 active criteria (plus the overall score) feed the mascots; legacy keys are ignored.
 function buildDeterministicMascotWorld(work, palette) {
   const world = createWorld({ seed: 2026 });
+  const scores = {};
+  for (const key of CRITERIA_KEYS) {
+    scores[key] = finiteOr(work?.scores?.[key], 0);
+  }
+  const geral = finiteOr(work?.scores?.geral, 0);
+  scores.geral = geral;
   setInputs(world, {
     contextKind: 'poster',
     title: work?.title || '',
-    scores: work?.scores || {},
+    scores,
     palette,
-    savedPulse: finiteOr(work?.scores?.geral, 0) >= 9.0
+    savedPulse: geral >= 9.0
   });
   for (let i = 0; i < MASCOT_PREROLL_STEPS; i += 1) {
     advance(world, FIXED_DT);
@@ -646,6 +706,7 @@ function buildDeterministicMascotWorld(work, palette) {
  *   fetchFn?: typeof fetch,
  *   decodeBlob?: (blob: Blob) => Promise<{ source: any, close?: () => void }>,
  *   createCanvas?: (w: number, h: number) => HTMLCanvasElement,
+ *   ensureFontsFn?: () => Promise<unknown>,
  *   showMascots?: boolean,
  *   timeoutMs?: number
  * }} [options]
@@ -657,6 +718,9 @@ export async function renderPoster(work, theme, options = {}) {
 
   const showMascots = options.showMascots !== false;
   const resolvedTheme = normalizePosterTheme(theme, work.palette);
+
+  // Editorial fonts must be ready before text is measured (layout) or drawn (canvas).
+  await (typeof options.ensureFontsFn === 'function' ? options.ensureFontsFn() : ensureEditorialFonts());
 
   const canvas =
     typeof options.createCanvas === 'function'

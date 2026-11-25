@@ -3,11 +3,12 @@
  * 1) 1080x1350 PNG poster preview, pre-rendering, download, and synchronous Web Share.
  * 2) 1080x1920 MP4 video on-demand export (Mediabunny), progress + ETA (clock kept only here),
  *    AbortController cancellation, progressive Screen Wake Lock, <video> ObjectURL preview, and synchronous MP4 share.
+ * Editorial fonts are preloaded through `document.fonts` (when available) before every PNG and MP4 export.
  * Strict DOM construction via createElement/textContent, zero literal colors, zero globals, no markup strings.
  */
 
 import { formatUserError, presentErrorToast } from '../ui/errors.js';
-import { renderPoster } from './poster.js';
+import { ensureEditorialFonts, renderPoster } from './poster.js';
 import { buildFile, canShareFile, downloadFile, shareFile } from './share.js';
 import {
   DEFAULT_VIDEO_FPS,
@@ -20,6 +21,8 @@ const DEFAULT_DEBOUNCE_MS = 140;
 
 /**
  * Resolves colors and concrete font stacks from `css/tokens.css` for either `paper` or `slate`.
+ * Mascot inks (`--ink-koma`, `--ink-save`, `--ink-kino`, `--ink-echo`) are exposed both as `inkKoma`...
+ * and as the `komaInk`... aliases read by the mascot engine, falling back to the mascot accent.
  * @param {'paper' | 'slate'} [themeId]
  * @param {Document} [doc]
  */
@@ -38,6 +41,12 @@ export function resolvePosterThemeFromDom(themeId = 'paper', doc = globalThis.do
     const styles = globalThis.getComputedStyle(probe);
     const pick = (name) => styles.getPropertyValue(name).trim();
     const grainAlpha = Number.parseFloat(pick('--grain-opacity'));
+    const mascotAccent = pick('--mascot-accent');
+    const inkOf = (name) => pick(name) || mascotAccent;
+    const inkKoma = inkOf('--ink-koma');
+    const inkSave = inkOf('--ink-save');
+    const inkKino = inkOf('--ink-kino');
+    const inkEcho = inkOf('--ink-echo');
 
     return {
       id: safeId,
@@ -60,9 +69,18 @@ export function resolvePosterThemeFromDom(themeId = 'paper', doc = globalThis.do
         ink: pick('--mascot-ink'),
         paper: pick('--mascot-paper'),
         surface: pick('--mascot-surface'),
-        accent: pick('--mascot-accent'),
+        accent: mascotAccent,
         glow: pick('--mascot-glow'),
-        crack: pick('--mascot-crack')
+        crack: pick('--mascot-crack'),
+        inkKoma,
+        inkSave,
+        inkKino,
+        inkEcho,
+        // Aliases read by the mascot engine (theme.<id>Ink).
+        komaInk: inkKoma,
+        saveInk: inkSave,
+        kinoInk: inkKino,
+        echoInk: inkEcho
       }
     };
   } finally {
@@ -103,6 +121,7 @@ function formatEtaSuffix(fracao, elapsedMs) {
  *   shareFileFn?: typeof shareFile,
  *   downloadFileFn?: typeof downloadFile,
  *   resolveThemeFn?: typeof resolvePosterThemeFromDom,
+ *   ensureFontsFn?: () => Promise<unknown>,
  *   now?: () => number,
  *   navigatorObj?: Navigator,
  *   debounceMs?: number
@@ -121,6 +140,7 @@ export function mountPosterStudio(container, deps) {
   const shareFileFn = deps.shareFileFn || shareFile;
   const downloadFileFn = deps.downloadFileFn || downloadFile;
   const resolveThemeFn = deps.resolveThemeFn || resolvePosterThemeFromDom;
+  const ensureFontsFn = deps.ensureFontsFn || (() => ensureEditorialFonts(globalThis.document));
   const clockNow = deps.now || (() => globalThis.performance?.now?.() ?? 0);
   const navigatorObj = deps.navigatorObj ?? globalThis.navigator;
   const debounceMs = Number.isFinite(deps.debounceMs) ? deps.debounceMs : DEFAULT_DEBOUNCE_MS;
@@ -570,6 +590,11 @@ export function mountPosterStudio(container, deps) {
       return;
     }
     try {
+      // Editorial fonts first, so the theme read and the canvas text use the loaded faces.
+      await ensureFontsFn();
+      if (!isOpen || seq !== renderSeq) {
+        return;
+      }
       const resolvedTheme = resolveThemeFn(posterThemeId);
       const result = await renderPosterFn(activeWork, resolvedTheme, {
         db: deps.db,
@@ -645,7 +670,7 @@ export function mountPosterStudio(container, deps) {
     videoAbortController = new AbortController();
     videoProgressEl.hidden = false;
     videoProgressEl.value = 0;
-    videoPhaseText.textContent = 'Verificando suporte de codecs...';
+    videoPhaseText.textContent = 'Carregando fontes editoriais...';
     syncTabDisplay();
     syncVideoActionButtons();
 
@@ -669,6 +694,8 @@ export function mountPosterStudio(container, deps) {
     };
 
     try {
+      // Editorial fonts must be ready before the first video frame is measured or drawn.
+      await ensureFontsFn();
       const resolvedTheme = resolveThemeFn(posterThemeId);
       const { blob, info } = await exportVideoFn({
         work: activeWork,
