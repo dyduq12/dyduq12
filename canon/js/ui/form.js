@@ -1,13 +1,16 @@
 /**
- * Complete editorial form component with API search, 6 Pointer-Event sliders,
- * editable pros/cons lists, local cover upload, and schema validation.
+ * Complete editorial form component with clean work search, 4 Pointer-Event criteria sliders,
+ * automatic overall score (mean of the 4 criteria), clickable pros/cons chips,
+ * local cover upload, and schema validation.
  */
 
 import {
+  CRITERIA_KEYS,
   DEFAULT_PALETTE,
-  SCORE_KEYS,
+  LEGACY_SCORE_KEYS,
   WORK_STATUSES,
   WORK_TYPES,
+  computeGeral,
   createWork,
   generateManualId,
   validateWork
@@ -22,6 +25,10 @@ import { getCriterionLabelsForType } from './card-model.js';
 import { formatUserError, presentErrorToast } from './errors.js';
 import { createScoreSlider } from './sliders.js';
 
+const MAX_CHIPS = 6;
+const MAX_CHIP_CHARS = 40;
+const DEFAULT_SLIDER_VALUE = 7.0;
+
 const STATUS_OPTION_LABELS = {
   planned: 'Planejado',
   in_progress: 'Em andamento',
@@ -29,6 +36,44 @@ const STATUS_OPTION_LABELS = {
   on_hold: 'Pausado',
   dropped: 'Abandonado'
 };
+
+const TYPE_OPTION_LABELS = {
+  game: 'Jogo',
+  movie: 'Filme',
+  series: 'Série',
+  anime: 'Anime'
+};
+
+// Ready-made chip suggestions (6 per list) adapted to the media type family.
+const CHIP_SUGGESTIONS = {
+  game: {
+    pros: ['Gameplay viciante', 'Mundo bem construído', 'Trilha marcante', 'Visual lindo', 'Boa progressão', 'Ótimo desafio'],
+    cons: ['Bugs ocasionais', 'Ritmo irregular', 'Muito repetitivo', 'Curva de dificuldade', 'História fraca', 'Otimização ruim']
+  },
+  screen: {
+    pros: ['Roteiro sólido', 'Atuações fortes', 'Fotografia linda', 'Trilha marcante', 'Direção segura', 'Final memorável'],
+    cons: ['Ritmo arrastado', 'Final fraco', 'Personagens rasos', 'Clichês demais', 'Furos de roteiro', 'Edição confusa']
+  },
+  anime: {
+    pros: ['Animação fluida', 'Trilha marcante', 'Personagens carismáticos', 'Roteiro envolvente', 'Arte marcante', 'Ótimas lutas'],
+    cons: ['Início lento', 'Filler demais', 'Animação irregular', 'Final apressado', 'Fanservice excessivo', 'Ritmo irregular']
+  }
+};
+
+function getSuggestionFamily(mediaType) {
+  if (mediaType === 'anime') {
+    return 'anime';
+  }
+  if (mediaType === 'movie' || mediaType === 'series') {
+    return 'screen';
+  }
+  return 'game';
+}
+
+function formatGeralDisplay(value) {
+  const num = typeof value === 'number' && Number.isFinite(value) ? value : 0;
+  return num.toFixed(1).replace('.', ',');
+}
 
 function createFieldWrapper(id, labelText, control) {
   const wrap = document.createElement('div');
@@ -43,61 +88,115 @@ function createFieldWrapper(id, labelText, control) {
   return { wrap, errEl };
 }
 
-function createEditableListSection(title, inputId, placeholder) {
-  let items = [];
+/**
+ * Clickable chip group (buttons with aria-pressed) with a collapsed free-text input for custom tags.
+ * Selected items outside the current suggestions stay visible as active custom chips.
+ */
+function createChipSelector({ title, groupId, inputId, inputLabel, addLabel }) {
+  let suggestions = [];
+  let selected = [];
 
   const container = document.createElement('div');
-  container.className = 'canon-list-editor';
+  container.className = 'canon-list-editor canon-chip-selector';
 
-  const label = document.createElement('label');
-  label.htmlFor = inputId;
-  label.textContent = title;
+  const groupLabel = document.createElement('span');
+  groupLabel.id = `${groupId}-label`;
+  groupLabel.className = 'canon-chip-group-label';
+  groupLabel.textContent = title;
+
+  const group = document.createElement('div');
+  group.id = groupId;
+  group.className = 'canon-chip-group';
+  group.setAttribute('role', 'group');
+  group.setAttribute('aria-labelledby', groupLabel.id);
+
+  const status = document.createElement('p');
+  status.className = 'canon-brand-subtitle canon-chip-status';
+  status.setAttribute('role', 'status');
+  status.hidden = true;
+
+  const more = document.createElement('details');
+  more.className = 'canon-chip-more';
+  const summary = document.createElement('summary');
+  summary.textContent = 'Escrever outro';
 
   const inputRow = document.createElement('div');
   inputRow.className = 'canon-list-input-row';
 
+  const inputLabelEl = document.createElement('label');
+  inputLabelEl.htmlFor = inputId;
+  inputLabelEl.textContent = inputLabel;
+
   const input = document.createElement('input');
   input.id = inputId;
   input.type = 'text';
-  input.placeholder = placeholder;
+  input.maxLength = MAX_CHIP_CHARS;
 
   const addBtn = document.createElement('button');
   addBtn.type = 'button';
   addBtn.textContent = 'Adicionar';
+  addBtn.setAttribute('aria-label', addLabel);
 
-  const ul = document.createElement('ul');
-  ul.className = 'canon-chip-list';
+  inputRow.append(input, addBtn);
+  more.append(summary, inputLabelEl, inputRow);
+  container.append(groupLabel, group, status, more);
+
+  function showStatus(message) {
+    status.textContent = message;
+    status.hidden = !message;
+  }
+
+  function findCanonical(text) {
+    const lower = text.toLowerCase();
+    return [...suggestions, ...selected].find((item) => item.toLowerCase() === lower) || text;
+  }
 
   function render() {
-    ul.replaceChildren();
-    items.forEach((entry, index) => {
-      const li = document.createElement('li');
-      li.className = 'canon-chip-item';
+    group.replaceChildren();
+    const custom = selected.filter((item) => !suggestions.includes(item));
+    for (const item of [...suggestions, ...custom]) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'canon-chip-toggle';
+      chip.textContent = item;
+      chip.setAttribute('aria-pressed', String(selected.includes(item)));
+      chip.addEventListener('click', () => toggle(item));
+      group.appendChild(chip);
+    }
+  }
 
-      const text = document.createElement('span');
-      text.textContent = entry;
-
-      const rmBtn = document.createElement('button');
-      rmBtn.type = 'button';
-      rmBtn.textContent = 'Remover';
-      rmBtn.setAttribute('aria-label', `Remover item "${entry}"`);
-      rmBtn.addEventListener('click', () => {
-        items.splice(index, 1);
-        render();
-      });
-
-      li.append(text, rmBtn);
-      ul.appendChild(li);
-    });
+  function toggle(item) {
+    if (selected.includes(item)) {
+      selected = selected.filter((entry) => entry !== item);
+      showStatus('');
+    } else if (selected.length >= MAX_CHIPS) {
+      showStatus(`Limite de ${MAX_CHIPS} itens por lista.`);
+      return;
+    } else {
+      selected = [...selected, item];
+      showStatus('');
+    }
+    render();
   }
 
   function addCurrent() {
-    const val = input.value.trim();
-    if (!val) {
+    const raw = input.value.trim().slice(0, MAX_CHIP_CHARS);
+    if (!raw) {
       return;
     }
-    items.push(val);
+    const value = findCanonical(raw);
+    if (selected.includes(value)) {
+      input.value = '';
+      showStatus('');
+      return;
+    }
+    if (selected.length >= MAX_CHIPS) {
+      showStatus(`Limite de ${MAX_CHIPS} itens por lista.`);
+      return;
+    }
+    selected = [...selected, value];
     input.value = '';
+    showStatus('');
     render();
   }
 
@@ -109,14 +208,28 @@ function createEditableListSection(title, inputId, placeholder) {
     }
   });
 
-  inputRow.append(input, addBtn);
-  container.append(label, inputRow, ul);
-
   return {
     element: container,
-    getItems: () => [...items],
+    getItems: () => [...selected],
     setItems: (nextItems) => {
-      items = Array.isArray(nextItems) ? nextItems.filter((x) => typeof x === 'string' && x.trim()) : [];
+      const clean = [];
+      if (Array.isArray(nextItems)) {
+        for (const entry of nextItems) {
+          if (typeof entry !== 'string') {
+            continue;
+          }
+          const text = entry.trim();
+          if (text && !clean.some((item) => item.toLowerCase() === text.toLowerCase())) {
+            clean.push(findCanonical(text));
+          }
+        }
+      }
+      selected = clean.slice(0, MAX_CHIPS);
+      showStatus('');
+      render();
+    },
+    setSuggestions: (nextSuggestions) => {
+      suggestions = Array.isArray(nextSuggestions) ? [...nextSuggestions] : [];
       render();
     }
   };
@@ -130,7 +243,8 @@ function createEditableListSection(title, inputId, placeholder) {
  *   store: ReturnType<typeof import('../core/store.js').createStore>,
  *   searchService: ReturnType<typeof import('../api/search.js').createSearchService>,
  *   bus: ReturnType<typeof import('../core/events.js').createEventBus>,
- *   toast: ReturnType<typeof import('./toast.js').createToaster>
+ *   toast: ReturnType<typeof import('./toast.js').createToaster>,
+ *   aiContainer?: HTMLElement | null
  * }} deps
  */
 export function createWorkFormPanel(container, deps) {
@@ -142,37 +256,34 @@ export function createWorkFormPanel(container, deps) {
 
   container.replaceChildren();
 
-  // --- AI IMPORT PANEL ---
-  const aiImportSlot = document.createElement('div');
+  // --- AI IMPORT PANEL (decoupled: external drawer container, internal slot only as fallback) ---
+  const externalAiContainer = deps.aiContainer || document.getElementById('ai-panel');
+  const aiImportSlot = externalAiContainer ? null : document.createElement('div');
+  const aiMountTarget = externalAiContainer || aiImportSlot;
 
   // --- SEARCH BLOCK ---
   const searchHeading = document.createElement('h2');
   searchHeading.className = 'canon-panel-title';
-  searchHeading.textContent = 'Buscar em APIs';
+  searchHeading.textContent = 'Buscar Obra';
 
   const searchRow = document.createElement('div');
   searchRow.className = 'canon-search-row';
 
   const searchTypeSelect = document.createElement('select');
   searchTypeSelect.id = 'search-type';
-  searchTypeSelect.setAttribute('aria-label', 'Tipo de mídia para busca');
-  for (const [val, text] of [
-    ['anime', 'anime (AniList)'],
-    ['movie', 'movie (TMDB)'],
-    ['series', 'series (TMDB)'],
-    ['game', 'game (RAWG)']
-  ]) {
+  searchTypeSelect.setAttribute('aria-label', 'Tipo de obra para busca');
+  for (const val of ['anime', 'movie', 'series', 'game']) {
     const opt = document.createElement('option');
     opt.value = val;
-    opt.textContent = text;
+    opt.textContent = TYPE_OPTION_LABELS[val];
     searchTypeSelect.appendChild(opt);
   }
 
   const searchInput = document.createElement('input');
   searchInput.id = 'search-query';
   searchInput.type = 'search';
-  searchInput.placeholder = 'Buscar título para preencher ficha...';
-  searchInput.setAttribute('aria-label', 'Título para buscar na API');
+  searchInput.placeholder = 'Digite o título da obra…';
+  searchInput.setAttribute('aria-label', 'Título da obra para buscar');
 
   const searchBtn = document.createElement('button');
   searchBtn.type = 'button';
@@ -206,7 +317,7 @@ export function createWorkFormPanel(container, deps) {
   for (const t of WORK_TYPES) {
     const opt = document.createElement('option');
     opt.value = t;
-    opt.textContent = t;
+    opt.textContent = TYPE_OPTION_LABELS[t] || t;
     typeSelect.appendChild(opt);
   }
 
@@ -287,25 +398,76 @@ export function createWorkFormPanel(container, deps) {
     fieldSoundtrack.wrap
   );
 
-  // --- 6 SCORE SLIDERS ---
+  // --- 4 CRITERIA SLIDERS + AUTOMATIC OVERALL SCORE ---
   const slidersBox = document.createElement('fieldset');
   slidersBox.className = 'canon-sliders-group';
   const slidersTitle = document.createElement('legend');
   slidersTitle.textContent = 'Notas (0 a 10, passo 0,5)';
   slidersBox.appendChild(slidersTitle);
 
+  const geralRow = document.createElement('div');
+  geralRow.className = 'canon-geral-row';
+  const geralLabel = document.createElement('span');
+  geralLabel.id = 'work-geral-label';
+  geralLabel.className = 'canon-geral-label';
+  geralLabel.textContent = 'Nota Geral (média automática)';
+  const geralOutput = document.createElement('output');
+  geralOutput.id = 'work-geral';
+  geralOutput.className = 'canon-geral-output';
+  geralOutput.setAttribute('aria-live', 'polite');
+  geralOutput.setAttribute('aria-labelledby', geralLabel.id);
+  geralOutput.setAttribute('for', CRITERIA_KEYS.map((key) => `slider-${key}`).join(' '));
+  geralRow.append(geralLabel, geralOutput);
+
   const sliderMap = new Map();
-  for (const key of SCORE_KEYS) {
+
+  function getCriteriaScores() {
+    const scores = {};
+    for (const key of CRITERIA_KEYS) {
+      scores[key] = sliderMap.get(key)?.getValue() ?? 0;
+    }
+    return scores;
+  }
+
+  function getCurrentScores() {
+    const scores = getCriteriaScores();
+    scores.geral = computeGeral(scores);
+    return scores;
+  }
+
+  function updateGeralOutput() {
+    geralOutput.textContent = formatGeralDisplay(computeGeral(getCriteriaScores()));
+  }
+
+  function emitFormContext(active) {
+    if (!active) {
+      deps.bus?.emit('form:context', { active: false });
+      return;
+    }
+    deps.bus?.emit('form:context', {
+      active: true,
+      title: titleInput.value.trim() || 'Formulário',
+      scores: getCurrentScores(),
+      palette: [...currentPalette]
+    });
+  }
+
+  for (const key of CRITERIA_KEYS) {
     const slider = createScoreSlider({
       id: `slider-${key}`,
       name: key,
-      label: key === 'geral' ? 'Nota Geral' : key,
-      value: key === 'geral' ? 7.5 : 7.0,
-      bus: deps.bus
+      label: key,
+      value: DEFAULT_SLIDER_VALUE,
+      bus: deps.bus,
+      onChange: () => {
+        updateGeralOutput();
+        emitFormContext(true);
+      }
     });
     sliderMap.set(key, slider);
     slidersBox.appendChild(slider.element);
   }
+  slidersBox.appendChild(geralRow);
 
   function syncSliderLabels(mediaType) {
     const labels = getCriterionLabelsForType(mediaType);
@@ -314,11 +476,33 @@ export function createWorkFormPanel(container, deps) {
     }
   }
 
-  typeSelect.addEventListener('change', () => syncSliderLabels(typeSelect.value));
+  // --- PROS & CONS (clickable chips) ---
+  const prosEditor = createChipSelector({
+    title: 'Prós',
+    groupId: 'pros-chips',
+    inputId: 'pros-input',
+    inputLabel: 'Novo ponto positivo',
+    addLabel: 'Adicionar ponto positivo'
+  });
+  const consEditor = createChipSelector({
+    title: 'Contras',
+    groupId: 'cons-chips',
+    inputId: 'cons-input',
+    inputLabel: 'Novo ponto negativo',
+    addLabel: 'Adicionar ponto negativo'
+  });
 
-  // --- PROS & CONS ---
-  const prosEditor = createEditableListSection('Prós', 'pros-input', 'Adicionar ponto positivo...');
-  const consEditor = createEditableListSection('Contras', 'cons-input', 'Adicionar ponto negativo...');
+  // Renews suggested chips for the media type while keeping what the user already selected.
+  function syncChipSuggestions(mediaType) {
+    const family = CHIP_SUGGESTIONS[getSuggestionFamily(mediaType)];
+    prosEditor.setSuggestions(family.pros);
+    consEditor.setSuggestions(family.cons);
+  }
+
+  typeSelect.addEventListener('change', () => {
+    syncSliderLabels(typeSelect.value);
+    syncChipSuggestions(typeSelect.value);
+  });
 
   // --- COVER UPLOAD & PREVIEW ---
   const coverBox = document.createElement('div');
@@ -381,7 +565,12 @@ export function createWorkFormPanel(container, deps) {
     actionsRow
   );
 
-  container.append(aiImportSlot, searchHeading, searchRow, searchStatusEl, searchResultsEl, formHeading, form);
+  const mountedParts = [];
+  if (aiImportSlot) {
+    mountedParts.push(aiImportSlot);
+  }
+  mountedParts.push(searchHeading, searchRow, searchStatusEl, searchResultsEl, formHeading, form);
+  container.append(...mountedParts);
 
   function clearFieldErrors() {
     for (const errEl of errorMap.values()) {
@@ -433,27 +622,6 @@ export function createWorkFormPanel(container, deps) {
     }
   }
 
-  function getCurrentScores() {
-    const scores = {};
-    for (const key of SCORE_KEYS) {
-      scores[key] = sliderMap.get(key)?.getValue() ?? 0;
-    }
-    return scores;
-  }
-
-  function emitFormContext(active) {
-    if (!active) {
-      deps.bus?.emit('form:context', { active: false });
-      return;
-    }
-    deps.bus?.emit('form:context', {
-      active: true,
-      title: titleInput.value.trim() || 'Formulário',
-      scores: getCurrentScores(),
-      palette: [...currentPalette]
-    });
-  }
-
   function reset() {
     editingId = '';
     pendingCoverUrl = '';
@@ -465,9 +633,11 @@ export function createWorkFormPanel(container, deps) {
     typeSelect.value = 'game';
     statusSelect.value = 'planned';
     syncSliderLabels('game');
-    for (const key of SCORE_KEYS) {
-      sliderMap.get(key)?.setValue(key === 'geral' ? 7.5 : 7.0);
+    for (const key of CRITERIA_KEYS) {
+      sliderMap.get(key)?.setValue(DEFAULT_SLIDER_VALUE);
     }
+    updateGeralOutput();
+    syncChipSuggestions('game');
     prosEditor.setItems([]);
     consEditor.setItems([]);
     coverInput.value = '';
@@ -496,9 +666,11 @@ export function createWorkFormPanel(container, deps) {
     verdictInput.value = work.verdict || '';
 
     syncSliderLabels(typeSelect.value);
-    for (const key of SCORE_KEYS) {
+    for (const key of CRITERIA_KEYS) {
       sliderMap.get(key)?.setValue(work.scores?.[key] ?? 0);
     }
+    updateGeralOutput();
+    syncChipSuggestions(typeSelect.value);
     prosEditor.setItems(work.pros || []);
     consEditor.setItems(work.cons || []);
 
@@ -519,9 +691,16 @@ export function createWorkFormPanel(container, deps) {
       ? ` (com ${meta.filledFromApi.length} campo(s) da API)`
       : '';
     formHeading.textContent = `Revisar importação da IA${originNote}: ${work.title}`;
+    // Ask the shell to switch from the AI drawer to the form drawer.
+    container.dispatchEvent(
+      new CustomEvent('canon:open-drawer', {
+        bubbles: true,
+        detail: { drawer: 'form', source: 'ai-import' }
+      })
+    );
   }
 
-  const aiPanel = mountAiImportPanel(aiImportSlot, {
+  const aiPanel = mountAiImportPanel(aiMountTarget, {
     db: deps.db,
     searchService: deps.searchService,
     toast: deps.toast,
@@ -539,7 +718,7 @@ export function createWorkFormPanel(container, deps) {
       li.className = 'canon-result-item';
 
       const info = document.createElement('span');
-      const parts = [result.title, `(${result.year})`, `[${result.type}]`];
+      const parts = [result.title, `(${result.year})`, '·', TYPE_OPTION_LABELS[result.type] || result.type];
       if (result.studio) {
         parts.push(`— ${result.studio}`);
       }
@@ -547,7 +726,8 @@ export function createWorkFormPanel(container, deps) {
 
       const useBtn = document.createElement('button');
       useBtn.type = 'button';
-      useBtn.textContent = 'Usar este resultado';
+      useBtn.textContent = 'Usar';
+      useBtn.setAttribute('aria-label', `Usar ${result.title}`);
       useBtn.addEventListener('click', async () => {
         try {
           searchStatusEl.textContent = `Carregando detalhes de "${result.title}"...`;
@@ -569,6 +749,7 @@ export function createWorkFormPanel(container, deps) {
           soundtrackInput.value = data.soundtrack || '';
           starringInput.value = data.starring || '';
           syncSliderLabels(typeSelect.value);
+          syncChipSuggestions(typeSelect.value);
 
           formHeading.textContent = `Importado: ${data.title}`;
           cancelBtn.hidden = false;
@@ -680,9 +861,12 @@ export function createWorkFormPanel(container, deps) {
     const targetId = editingId || generateManualId();
     const existing = deps.store.get(targetId);
 
-    const scores = {};
-    for (const key of SCORE_KEYS) {
-      scores[key] = sliderMap.get(key)?.getValue() ?? 0;
+    const scores = getCurrentScores();
+    // Older records keep their legacy keys (never created for new works).
+    for (const key of LEGACY_SCORE_KEYS) {
+      if (typeof existing?.scores?.[key] === 'number') {
+        scores[key] = existing.scores[key];
+      }
     }
 
     const draft = createWork({
