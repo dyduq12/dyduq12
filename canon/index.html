@@ -17,19 +17,28 @@
         O CANON é uma aplicação 100% client-side em JavaScript. Ative o JavaScript no navegador para gerenciar seu acervo, buscar obras e exportar pôsteres ou vídeos.
       </p>
     </noscript>
+
     <header class="canon-header">
-      <div class="canon-brand-group">
-        <h1 class="canon-brand-title">CANON</h1>
-        <p class="canon-brand-subtitle">Câmara de curadoria editorial — Jogos, Filmes, Séries e Animes</p>
-        <p id="backup-info" class="canon-backup-meta">Último backup: ainda não exportado</p>
-        <p id="persist-info" class="canon-backup-meta" hidden></p>
+      <div class="canon-masthead">
+        <p class="canon-folio">ED. Nº 001</p>
+        <div class="canon-brand-group">
+          <h1 class="canon-brand-title canon-wordmark" aria-label="CANON">
+            <span class="canon-wordmark-letters" aria-hidden="true">CAN</span>
+            <svg class="canon-wordmark-o" viewBox="0 0 24 32" width="0.62em" height="0.74em" aria-hidden="true" focusable="false">
+              <rect x="1.75" y="1.75" width="20.5" height="28.5" rx="3" fill="none" stroke="currentColor" stroke-width="3.5"></rect>
+              <rect x="6.5" y="6.5" width="11" height="12" fill="currentColor"></rect>
+              <rect x="6.5" y="22" width="11" height="2.5" fill="currentColor"></rect>
+            </svg>
+            <span class="canon-wordmark-letters" aria-hidden="true">N</span>
+          </h1>
+          <p class="canon-brand-subtitle">Câmara de curadoria editorial — Jogos, Filmes, Séries e Animes</p>
+        </div>
       </div>
 
       <div class="canon-header-actions">
         <button id="theme-toggle-btn" type="button" aria-pressed="false">Tema: Papel Fosco</button>
-        <button id="export-btn" type="button">Exportar canon.json</button>
-        <label for="import-input" class="canon-file-label">Importar canon.json</label>
-        <input id="import-input" class="canon-sr-only" type="file" accept="application/json,.json">
+        <button id="settings-open-btn" type="button" class="canon-btn-quiet" data-drawer-open="settings" aria-controls="settings-drawer" aria-expanded="false">Acervo &amp; Chaves</button>
+        <button id="form-open-btn" type="button" class="canon-btn-primary" data-variant="primary" data-drawer-open="form" aria-controls="form-drawer" aria-expanded="false">+ Arquivar</button>
       </div>
     </header>
 
@@ -37,12 +46,9 @@
 
     <div class="canon-mascot-dock" data-mascot-dock aria-hidden="true"></div>
 
-    <main class="canon-main-grid">
+    <main class="canon-main-grid canon-main--single">
       <section id="gallery-panel" class="canon-panel" aria-label="Galeria do acervo"></section>
-      <section id="form-panel" class="canon-panel" aria-label="Busca e editor de obra"></section>
     </main>
-
-    <section id="settings-panel" class="canon-panel" aria-label="Configurações"></section>
 
     <footer class="canon-footer">
       <p>
@@ -54,9 +60,145 @@
     </footer>
   </div>
 
+  <div id="form-drawer" class="canon-drawer" data-drawer="form" hidden>
+    <div class="canon-drawer-backdrop" data-drawer-close aria-hidden="true"></div>
+    <div class="canon-drawer-dialog" role="dialog" aria-modal="true" aria-labelledby="form-drawer-title" tabindex="-1">
+      <div class="canon-drawer-header">
+        <p id="form-drawer-title" class="canon-drawer-title">Arquivar obra</p>
+        <button type="button" class="canon-drawer-close" data-drawer-close aria-label="Fechar gaveta de arquivamento">Fechar</button>
+      </div>
+      <div class="canon-drawer-body">
+        <section id="form-panel" class="canon-panel" aria-label="Busca e editor de obra"></section>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings-drawer" class="canon-drawer" data-drawer="settings" hidden>
+    <div class="canon-drawer-backdrop" data-drawer-close aria-hidden="true"></div>
+    <div class="canon-drawer-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-drawer-title" tabindex="-1">
+      <div class="canon-drawer-header">
+        <p id="settings-drawer-title" class="canon-drawer-title">Acervo &amp; Chaves</p>
+        <button type="button" class="canon-drawer-close" data-drawer-close aria-label="Fechar gaveta de configurações">Fechar</button>
+      </div>
+      <div class="canon-drawer-body">
+        <section class="canon-panel canon-backup-box" aria-label="Backup do acervo">
+          <p id="backup-info" class="canon-backup-meta">Último backup: ainda não exportado</p>
+          <p id="persist-info" class="canon-backup-meta" hidden></p>
+          <div class="canon-form-actions">
+            <button id="export-btn" type="button">Exportar canon.json</button>
+            <label for="import-input" class="canon-file-label">Importar canon.json</label>
+            <input id="import-input" class="canon-sr-only" type="file" accept="application/json,.json">
+          </div>
+        </section>
+        <section id="settings-panel" class="canon-panel" aria-label="Configurações"></section>
+      </div>
+    </div>
+  </div>
+
   <div id="studio-root"></div>
   <div id="toast-region" class="canon-toast-region"></div>
 
   <script type="module" src="js/main.js"></script>
+  <script type="module">
+    const byId = (id) => document.getElementById(id);
+    const drawers = {
+      form: { el: byId('form-drawer'), opener: byId('form-open-btn') },
+      settings: { el: byId('settings-drawer'), opener: byId('settings-open-btn') }
+    };
+    const FOCUSABLE = 'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    let active = null;
+    let lastFocus = null;
+
+    function openDrawer(key) {
+      const d = drawers[key];
+      if (!d || !d.el) return;
+      if (active === key) return;
+      if (active) closeDrawer(active, false);
+      lastFocus = document.activeElement;
+      d.el.hidden = false;
+      if (d.opener) d.opener.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('canon-drawer-open');
+      active = key;
+      const dialog = d.el.querySelector('[role="dialog"]');
+      if (dialog && !dialog.contains(document.activeElement)) {
+        dialog.focus({ preventScroll: true });
+      }
+    }
+
+    function closeDrawer(key, restoreFocus = true) {
+      const d = drawers[key];
+      if (!d || !d.el || d.el.hidden) return;
+      d.el.hidden = true;
+      if (d.opener) d.opener.setAttribute('aria-expanded', 'false');
+      if (active === key) active = null;
+      if (!active) document.body.classList.remove('canon-drawer-open');
+      if (restoreFocus && lastFocus && document.contains(lastFocus) && typeof lastFocus.focus === 'function') {
+        lastFocus.focus({ preventScroll: true });
+      }
+    }
+
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const opener = target.closest('[data-drawer-open]');
+      if (opener) {
+        openDrawer(opener.getAttribute('data-drawer-open'));
+        return;
+      }
+
+      const closer = target.closest('[data-drawer-close]');
+      if (closer) {
+        const drawer = closer.closest('[data-drawer]');
+        if (drawer) closeDrawer(drawer.getAttribute('data-drawer'));
+        return;
+      }
+
+      const button = target.closest('button');
+      if (button && button.closest('.canon-card-btn-group') && button.textContent.trim() === 'Editar') {
+        openDrawer('form');
+      }
+    }, true);
+
+    const formPanel = byId('form-panel');
+    if (formPanel) {
+      formPanel.addEventListener('focusin', () => openDrawer('form'));
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (!active) return;
+      const d = drawers[active];
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeDrawer(active);
+        return;
+      }
+      if (event.key !== 'Tab' || !d || !d.el) return;
+      const dialog = d.el.querySelector('[role="dialog"]');
+      if (!dialog) return;
+      const items = Array.from(dialog.querySelectorAll(FOCUSABLE)).filter(
+        (el) => !el.disabled && !el.closest('[hidden]')
+      );
+      if (items.length === 0) {
+        event.preventDefault();
+        dialog.focus({ preventScroll: true });
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+
+    document.addEventListener('canon:open-drawer', (event) => {
+      const detail = event.detail || {};
+      openDrawer(detail.drawer === 'settings' ? 'settings' : 'form');
+    });
+  </script>
 </body>
 </html>
