@@ -1,7 +1,7 @@
 /**
  * Mascot dock DOM bridge: single Canvas 2D inside [data-mascot-dock], ResizeObserver (dpr <= 2),
  * single rAF loop paused on hidden tab / offscreen / prefers-reduced-motion,
- * Pointer Events (R3), sound toggle, and audio/haptics wiring.
+ * Pointer Events (R3), pointer-to-gaze bridge, sound toggle, and audio/haptics wiring.
  * Zero Math.random, zero Date.now, zero performance.now, zero literal colors.
  */
 
@@ -15,11 +15,15 @@ import {
   createWorld,
   drawWorld,
   setInputs,
+  setPointer,
   triggerMascotImpulse
 } from './engine.js';
 import { triggerHaptic } from './haptics.js';
 
 const TAP_TOLERANCE_PX = 10;
+const IDLE_CAPTION = 'Curadoria viva · toque nos guardiões';
+const FORM_PLACEHOLDER_TITLE = 'Formulário';
+const NEW_WORK_TITLE = 'Nova obra';
 const MASCOT_LABELS = [
   ['koma', 'KOMA'],
   ['save', 'SAVE'],
@@ -30,15 +34,30 @@ const MASCOT_LABELS = [
 function readResolvedTheme() {
   const styles = getComputedStyle(document.documentElement);
   const pick = (name) => styles.getPropertyValue(name).trim();
+  const accent = pick('--mascot-accent');
+  const inkOf = (name) => pick(name) || accent;
+  const inkKoma = inkOf('--ink-koma');
+  const inkSave = inkOf('--ink-save');
+  const inkKino = inkOf('--ink-kino');
+  const inkEcho = inkOf('--ink-echo');
   return {
     ink: pick('--mascot-ink'),
     paper: pick('--mascot-paper'),
     surface: pick('--mascot-surface'),
-    accent: pick('--mascot-accent'),
+    accent,
     glow: pick('--mascot-glow'),
     crack: pick('--mascot-crack'),
     workA: pick('--work-a'),
-    workB: pick('--work-b')
+    workB: pick('--work-b'),
+    inkKoma,
+    inkSave,
+    inkKino,
+    inkEcho,
+    // Aliases read by the mascot engine (theme.<id>Ink).
+    komaInk: inkKoma,
+    saveInk: inkSave,
+    kinoInk: inkKino,
+    echoInk: inkEcho
   };
 }
 
@@ -72,13 +91,13 @@ export function mountMascotDock(container, deps) {
 
   const contextLabel = document.createElement('p');
   contextLabel.className = 'canon-mascot-dock-context';
-  contextLabel.textContent = 'Mascotes: aguardando contexto';
+  contextLabel.textContent = IDLE_CAPTION;
 
   const soundBtn = document.createElement('button');
   soundBtn.type = 'button';
   soundBtn.className = 'canon-sound-btn';
   soundBtn.setAttribute('aria-pressed', 'false');
-  soundBtn.textContent = 'Som: Silenciado';
+  soundBtn.textContent = 'Som: Mudo';
 
   topBar.append(contextLabel, soundBtn);
 
@@ -115,6 +134,10 @@ export function mountMascotDock(container, deps) {
   let lastFrameTime = null;
   let simulatedTimeMs = 0;
 
+  // Latest pointer position in normalized -1..1 canvas coordinates; applied once per animation frame.
+  let pointerNorm = null;
+  let pointerDirty = false;
+
   const tickThrottler = createTickThrottler({
     intervalMs: 80,
     now: () => simulatedTimeMs
@@ -132,7 +155,7 @@ export function mountMascotDock(container, deps) {
         return;
       }
       soundBtn.setAttribute('aria-pressed', String(status.enabled));
-      soundBtn.textContent = status.enabled ? 'Som: Ativo' : 'Som: Silenciado';
+      soundBtn.textContent = status.enabled ? 'Som: Ativo' : 'Som: Mudo';
     }
   });
 
@@ -178,9 +201,30 @@ export function mountMascotDock(container, deps) {
     lastFrameTime = frameTime;
     simulatedTimeMs = world.time * 1000;
 
+    if (pointerDirty) {
+      pointerDirty = false;
+      if (pointerNorm) {
+        setPointer(world, pointerNorm.x, pointerNorm.y);
+      } else {
+        setPointer(world, null, null);
+      }
+    }
+
     advance(world, dt);
     renderFrame();
     rafId = requestAnimationFrame(onAnimationFrame);
+  }
+
+  // Shows only the work title (or a short editorial caption when nothing is in focus).
+  function resolveContextCaption(active, isForm) {
+    if (!active) {
+      return IDLE_CAPTION;
+    }
+    const title = typeof active.title === 'string' ? active.title.trim() : '';
+    if (!title || (isForm && title === FORM_PLACEHOLDER_TITLE)) {
+      return NEW_WORK_TITLE;
+    }
+    return title;
   }
 
   // Precedence rule: active form > flipped card > none
@@ -194,8 +238,7 @@ export function mountMascotDock(container, deps) {
         palette: active.palette || DEFAULT_PALETTE,
         savedPulse: extra.savedPulse === true
       });
-      const sourceTag = formContext ? 'formulário' : 'card';
-      contextLabel.textContent = `Mascotes (${sourceTag}): ${active.title || 'Nova obra'}`;
+      contextLabel.textContent = resolveContextCaption(active, Boolean(formContext));
     } else {
       setInputs(world, {
         contextKind: 'none',
@@ -204,7 +247,7 @@ export function mountMascotDock(container, deps) {
         palette: DEFAULT_PALETTE,
         savedPulse: extra.savedPulse === true
       });
-      contextLabel.textContent = 'Mascotes: aguardando contexto';
+      contextLabel.textContent = IDLE_CAPTION;
     }
     renderFrame();
   }
@@ -235,6 +278,34 @@ export function mountMascotDock(container, deps) {
       playSafeSound('save');
     }
   });
+
+  // Pointer-to-gaze bridge: normalized against the canvas area, clamped by setPointer in the frame loop.
+  function normalizePointer(event) {
+    const rect = canvas.getBoundingClientRect();
+    if (!(rect.width > 0) || !(rect.height > 0)) {
+      return null;
+    }
+    const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    if (!Number.isFinite(nx) || !Number.isFinite(ny)) {
+      return null;
+    }
+    return { x: Math.max(-1, Math.min(1, nx)), y: Math.max(-1, Math.min(1, ny)) };
+  }
+
+  const onDockPointerMove = (event) => {
+    pointerNorm = normalizePointer(event);
+    pointerDirty = true;
+  };
+
+  const clearDockPointer = () => {
+    pointerNorm = null;
+    pointerDirty = true;
+  };
+
+  container.addEventListener('pointermove', onDockPointerMove);
+  container.addEventListener('pointerleave', clearDockPointer);
+  container.addEventListener('pointercancel', clearDockPointer);
 
   // Pointer Events (R3) on canvas with pan-y scroll preservation
   let activePointerId = null;
@@ -315,7 +386,11 @@ export function mountMascotDock(container, deps) {
     audio.ensureResumedInGesture();
     if (payload && typeof payload.name === 'string') {
       if (!formContext) {
-        formContext = { title: 'Formulário', scores: { ...world.inputs.scores }, palette: [...world.inputs.palette] };
+        formContext = {
+          title: FORM_PLACEHOLDER_TITLE,
+          scores: { ...world.inputs.scores },
+          palette: [...world.inputs.palette]
+        };
       }
       formContext.scores = {
         ...formContext.scores,
@@ -335,7 +410,7 @@ export function mountMascotDock(container, deps) {
       formContext = null;
     } else {
       formContext = {
-        title: payload.title || 'Formulário',
+        title: payload.title || FORM_PLACEHOLDER_TITLE,
         scores: { ...(payload.scores || {}) },
         palette: Array.isArray(payload.palette) ? [...payload.palette] : [...DEFAULT_PALETTE]
       };
@@ -414,6 +489,9 @@ export function mountMascotDock(container, deps) {
       unsubTheme();
       document.removeEventListener('visibilitychange', onVisibility);
       reducedMotionQuery?.removeEventListener?.('change', onReducedMotionChange);
+      container.removeEventListener('pointermove', onDockPointerMove);
+      container.removeEventListener('pointerleave', clearDockPointer);
+      container.removeEventListener('pointercancel', clearDockPointer);
       canvas.removeEventListener('pointerdown', onCanvasPointerDown);
       canvas.removeEventListener('pointerup', onCanvasPointerUp);
       canvas.removeEventListener('pointercancel', cancelCanvasPointer);
