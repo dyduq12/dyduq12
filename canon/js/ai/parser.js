@@ -3,9 +3,11 @@
  */
 
 import {
-  SCORE_KEYS,
+  CRITERIA_KEYS,
+  LEGACY_SCORE_KEYS,
   WORK_STATUSES,
   WORK_TYPES,
+  computeGeral,
   createWork,
   validateWork
 } from '../core/schema.js';
@@ -35,6 +37,10 @@ const ALLOWED_KEYS = new Set([
 
 const OPTIONAL_TEXT_FIELDS = ['genre', 'studio', 'director', 'soundtrack', 'starring'];
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+// `geral` is always computed from the 4 criteria and legacy keys are never created,
+// so an AI that still sends them is ignored without warnings or errors.
+const SILENTLY_IGNORED_SCORE_KEYS = new Set(['geral', ...LEGACY_SCORE_KEYS]);
 
 function truncateValue(value, limit = 48) {
   const str = String(value);
@@ -300,6 +306,8 @@ function parseTextList(rawList, fieldName, warnings, errors) {
 
 /**
  * Parses and validates an AI-generated text block into a CANON work object.
+ * Requires the 4 active criteria; `scores.geral` is computed (the AI value is ignored)
+ * and legacy keys such as `direcao_arte` are ignored silently.
  * Never throws; returns `{ ok, work, emptyFields, warnings, errors }`.
  * @param {string} rawText
  */
@@ -383,14 +391,16 @@ export function parseAiImport(rawText) {
 
   const parsedScores = Object.create(null);
   if (!safeData.scores || typeof safeData.scores !== 'object' || Array.isArray(safeData.scores)) {
-    errors.push({ field: 'scores', message: 'scores deve ser um objeto com os 6 critérios.' });
+    errors.push({ field: 'scores', message: 'scores deve ser um objeto com os 4 critérios.' });
   } else {
     for (const key of Object.keys(safeData.scores)) {
-      if (DANGEROUS_KEYS.has(key) || !SCORE_KEYS.includes(key)) {
+      if (DANGEROUS_KEYS.has(key)) {
+        warnings.push(`Chave desconhecida em scores ignorada: ${key}.`);
+      } else if (!SILENTLY_IGNORED_SCORE_KEYS.has(key) && !CRITERIA_KEYS.includes(key)) {
         warnings.push(`Chave desconhecida em scores ignorada: ${key}.`);
       }
     }
-    for (const key of SCORE_KEYS) {
+    for (const key of CRITERIA_KEYS) {
       if (!Object.hasOwn(safeData.scores, key) || safeData.scores[key] === undefined || safeData.scores[key] === null) {
         errors.push({ field: `scores.${key}`, message: `Critério obrigatório ausente em scores: ${key}.` });
       } else {
@@ -400,6 +410,7 @@ export function parseAiImport(rawText) {
         }
       }
     }
+    parsedScores.geral = computeGeral(parsedScores);
   }
 
   const pros = parseTextList(safeData.pros, 'pros', warnings, errors);
