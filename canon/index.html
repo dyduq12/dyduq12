@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>CANON — Curadoria Editorial</title>
   <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400..900&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,400..700&amp;display=swap">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/card.css">
@@ -19,8 +22,15 @@
     </noscript>
 
     <header class="canon-header">
-      <div class="canon-masthead">
+      <div class="canon-utility-bar">
         <p class="canon-folio">ED. Nº 001</p>
+        <div class="canon-utility-actions">
+          <button id="theme-toggle-btn" type="button" class="canon-btn-compact" aria-pressed="false">Tema: Papel Fosco</button>
+          <button id="settings-open-btn" type="button" class="canon-btn-quiet canon-btn-compact" data-drawer-open="settings" aria-controls="settings-drawer" aria-expanded="false">Acervo &amp; Chaves</button>
+        </div>
+      </div>
+
+      <div class="canon-masthead">
         <div class="canon-brand-group">
           <h1 class="canon-brand-title canon-wordmark" aria-label="CANON">
             <span class="canon-wordmark-letters" aria-hidden="true">CAN</span>
@@ -31,18 +41,23 @@
             </svg>
             <span class="canon-wordmark-letters" aria-hidden="true">N</span>
           </h1>
-          <p class="canon-brand-subtitle">Câmara de curadoria editorial — Jogos, Filmes, Séries e Animes</p>
         </div>
       </div>
 
-      <div class="canon-header-actions">
-        <button id="theme-toggle-btn" type="button" aria-pressed="false">Tema: Papel Fosco</button>
-        <button id="settings-open-btn" type="button" class="canon-btn-quiet" data-drawer-open="settings" aria-controls="settings-drawer" aria-expanded="false">Acervo &amp; Chaves</button>
+      <div class="canon-header-actions" role="group" aria-label="Ações principais">
+        <button id="ai-open-btn" type="button" class="canon-btn-ai" data-drawer-open="ai" aria-controls="ai-drawer" aria-expanded="false">✦ Importar IA</button>
         <button id="form-open-btn" type="button" class="canon-btn-primary" data-variant="primary" data-drawer-open="form" aria-controls="form-drawer" aria-expanded="false">+ Arquivar</button>
       </div>
     </header>
 
     <div id="backup-reminder" class="canon-backup-reminder" role="status" hidden></div>
+
+    <section class="canon-hero" aria-labelledby="hero-title">
+      <p class="canon-hero-kicker">Arquivo editorial de jogos, filmes, séries e animes</p>
+      <h2 id="hero-title" class="canon-hero-title">CANON</h2>
+      <p class="canon-hero-manifesto">Arquivar é escolher o que merece ficar. Aqui entram as obras que importam, e os fillers ficam de fora.</p>
+      <button type="button" class="canon-btn-primary canon-hero-cta" data-variant="primary" data-drawer-open="form" aria-controls="form-drawer" aria-expanded="false">Começar a arquivar</button>
+    </section>
 
     <div class="canon-mascot-dock" data-mascot-dock aria-hidden="true"></div>
 
@@ -69,6 +84,19 @@
       </div>
       <div class="canon-drawer-body">
         <section id="form-panel" class="canon-panel" aria-label="Busca e editor de obra"></section>
+      </div>
+    </div>
+  </div>
+
+  <div id="ai-drawer" class="canon-drawer" data-drawer="ai" hidden>
+    <div class="canon-drawer-backdrop" data-drawer-close aria-hidden="true"></div>
+    <div class="canon-drawer-dialog" role="dialog" aria-modal="true" aria-labelledby="ai-drawer-title" tabindex="-1">
+      <div class="canon-drawer-header">
+        <p id="ai-drawer-title" class="canon-drawer-title">Importar com IA</p>
+        <button type="button" class="canon-drawer-close" data-drawer-close aria-label="Fechar gaveta de importação por IA">Fechar</button>
+      </div>
+      <div class="canon-drawer-body">
+        <section id="ai-panel" class="canon-panel" aria-label="Importação de obra por IA"></section>
       </div>
     </div>
   </div>
@@ -103,20 +131,34 @@
     const byId = (id) => document.getElementById(id);
     const drawers = {
       form: { el: byId('form-drawer'), opener: byId('form-open-btn') },
+      ai: { el: byId('ai-drawer'), opener: byId('ai-open-btn') },
       settings: { el: byId('settings-drawer'), opener: byId('settings-open-btn') }
     };
-    const FOCUSABLE = 'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const FOCUSABLE = 'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
     let active = null;
     let lastFocus = null;
+
+    function setExpanded(key, expanded) {
+      for (const el of document.querySelectorAll(`[data-drawer-open="${key}"]`)) {
+        el.setAttribute('aria-expanded', String(expanded));
+      }
+    }
+
+    function isTabbable(el) {
+      if (el.disabled || el.closest('[hidden]')) return false;
+      const details = el.closest('details');
+      return !(details && !details.open && !el.matches('summary'));
+    }
 
     function openDrawer(key) {
       const d = drawers[key];
       if (!d || !d.el) return;
       if (active === key) return;
+      const switching = active !== null;
       if (active) closeDrawer(active, false);
-      lastFocus = document.activeElement;
+      if (!switching) lastFocus = document.activeElement;
       d.el.hidden = false;
-      if (d.opener) d.opener.setAttribute('aria-expanded', 'true');
+      setExpanded(key, true);
       document.body.classList.add('canon-drawer-open');
       active = key;
       const dialog = d.el.querySelector('[role="dialog"]');
@@ -129,7 +171,7 @@
       const d = drawers[key];
       if (!d || !d.el || d.el.hidden) return;
       d.el.hidden = true;
-      if (d.opener) d.opener.setAttribute('aria-expanded', 'false');
+      setExpanded(key, false);
       if (active === key) active = null;
       if (!active) document.body.classList.remove('canon-drawer-open');
       if (restoreFocus && lastFocus && document.contains(lastFocus) && typeof lastFocus.focus === 'function') {
@@ -176,9 +218,7 @@
       if (event.key !== 'Tab' || !d || !d.el) return;
       const dialog = d.el.querySelector('[role="dialog"]');
       if (!dialog) return;
-      const items = Array.from(dialog.querySelectorAll(FOCUSABLE)).filter(
-        (el) => !el.disabled && !el.closest('[hidden]')
-      );
+      const items = Array.from(dialog.querySelectorAll(FOCUSABLE)).filter(isTabbable);
       if (items.length === 0) {
         event.preventDefault();
         dialog.focus({ preventScroll: true });
@@ -195,9 +235,14 @@
       }
     });
 
+    // AI import finished: close the AI drawer first, then open the requested one (form by default).
     document.addEventListener('canon:open-drawer', (event) => {
       const detail = event.detail || {};
-      openDrawer(detail.drawer === 'settings' ? 'settings' : 'form');
+      const requested = detail.drawer === 'settings' || detail.drawer === 'ai' ? detail.drawer : 'form';
+      if (active === 'ai' && requested !== 'ai') {
+        closeDrawer('ai', false);
+      }
+      openDrawer(requested);
     });
   </script>
 </body>
