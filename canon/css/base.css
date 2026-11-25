@@ -1,4 +1,4 @@
-/* CANON Base Layout, Procedural Grain, Editorial Masthead, Drawers, Accessibility, Sliders & Form */
+/* CANON Base Layout, Procedural Grain, Editorial Masthead, Hero, Drawers, Accessibility, Sliders, Chips & Form */
 
 *,
 *::before,
@@ -186,14 +186,15 @@ textarea {
   border: 0;
 }
 
-/* Editorial masthead: heavy rule on top, hairline double rule below */
+/* Editorial masthead: heavy rule on top, hairline double rule below.
+   Three stacked rows: utilities, wordmark, main actions. */
 .canon-header {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-3) var(--space-3);
+  padding: var(--space-3);
   border-top: var(--rule-thick) solid var(--rule-color);
   border-bottom: var(--rule-hair) solid var(--rule-color);
   background-color: var(--color-surface);
@@ -213,12 +214,47 @@ textarea {
 
 @media (min-width: 720px) {
   .canon-header {
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-5);
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: var(--space-5);
     padding: var(--space-4) var(--space-5);
   }
+
+  .canon-utility-bar {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Utility row: folio on the left, compact Tema and Acervo controls on the right */
+.canon-utility-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--rule-hair) solid var(--rule-soft);
+  font-family: var(--font-mono);
+}
+
+.canon-utility-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.canon-btn-compact {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .canon-masthead {
@@ -230,14 +266,13 @@ textarea {
 
 .canon-folio {
   margin: 0;
-  padding-bottom: var(--space-1);
-  border-bottom: var(--rule-hair) solid var(--rule-soft);
   font-family: var(--font-mono);
   font-size: var(--text-micro);
   letter-spacing: var(--tracking-micro);
   text-transform: uppercase;
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .canon-brand-group {
@@ -291,46 +326,141 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+/* Main action bar: two clear buttons side by side, even at 360px */
 .canon-header-actions {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
   gap: var(--space-2);
   max-width: 100%;
-  padding: var(--space-1);
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.canon-header-actions::-webkit-scrollbar {
-  display: none;
+  padding: var(--space-1) 0;
 }
 
 .canon-header-actions button {
-  flex: 0 0 auto;
-  padding: var(--space-2) var(--space-3);
+  min-width: 0;
+  padding: var(--space-2);
   font-family: var(--font-condensed);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
-.canon-header-actions button[data-variant="primary"] {
-  margin-left: auto;
+.canon-btn-ai {
+  background-color: transparent;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.canon-btn-ai:hover {
+  background-color: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
 }
 
 @media (min-width: 720px) {
   .canon-header-actions {
-    flex-shrink: 0;
-    overflow: visible;
+    grid-template-columns: repeat(2, auto);
+    justify-content: end;
+    padding: var(--space-1);
   }
 
   .canon-header-actions button {
     padding: var(--space-2) var(--space-4);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
   }
+}
+
+/* Editorial opening: full when the archive is empty, a one-line strip once cards exist */
+.canon-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-6) 0 var(--space-5);
+  border-top: var(--rule-hair) solid var(--rule-soft);
+  border-bottom: var(--rule-hair) solid var(--rule-soft);
+}
+
+.canon-hero-kicker {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.canon-hero-title {
+  margin: 0;
+  font-family: var(--font-condensed);
+  font-size: var(--text-display);
+  font-weight: 900;
+  letter-spacing: var(--tracking-display);
+  line-height: 0.9;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.canon-hero-manifesto {
+  max-width: 34ch;
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: var(--rule-hair) solid var(--rule-soft);
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  color: var(--color-text);
+}
+
+.canon-hero-cta {
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  font-family: var(--font-condensed);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: var(--shadow-press-1), var(--shadow-inset-paper);
+}
+
+@media (min-width: 720px) {
+  .canon-hero {
+    padding: var(--space-7) 0 var(--space-6);
+  }
+
+  .canon-hero-manifesto {
+    max-width: 42ch;
+    font-size: var(--text-xl);
+  }
+}
+
+.canon-shell:has(.canon-card-shell) .canon-hero {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-top: 0;
+  overflow: hidden;
+}
+
+.canon-shell:has(.canon-card-shell) .canon-hero-title {
+  order: -1;
+  flex: none;
+  font-size: var(--text-xl);
+  line-height: 1;
+}
+
+.canon-shell:has(.canon-card-shell) .canon-hero-kicker {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.canon-shell:has(.canon-card-shell) .canon-hero-manifesto,
+.canon-shell:has(.canon-card-shell) .canon-hero-cta {
+  display: none;
 }
 
 .canon-backup-meta {
@@ -590,7 +720,7 @@ textarea {
   color: var(--color-text-muted);
 }
 
-/* Drawers (form and settings) */
+/* Drawers (form, AI and settings share the same editorial finish) */
 .canon-drawer {
   position: fixed;
   inset: 0;
@@ -600,8 +730,11 @@ textarea {
   align-items: stretch;
 }
 
-.canon-drawer[hidden] {
-  display: none;
+.canon-drawer[hidden],
+#form-drawer[hidden],
+#ai-drawer[hidden],
+#settings-drawer[hidden] {
+  display: none !important;
 }
 
 .canon-drawer-backdrop {
@@ -704,6 +837,7 @@ textarea {
 @media (max-width: 719px) {
   .canon-drawer-dialog {
     max-width: none;
+    padding-left: env(safe-area-inset-left);
     border-left: 0;
     border-top: var(--rule-thick) solid var(--rule-color);
   }
@@ -825,6 +959,49 @@ textarea {
   font-size: var(--text-sm);
 }
 
+/* Automatic overall score: a typographic scoreboard shown above the 4 sliders */
+.canon-geral-row {
+  order: -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--rule-thick) double var(--rule-color);
+}
+
+.canon-geral-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.canon-geral-output {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-family: var(--font-condensed);
+  font-size: clamp(2.75rem, 14vw, 4rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: var(--tracking-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.canon-geral-output::after {
+  content: "/10";
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--color-text-muted);
+}
+
 .canon-slider-row {
   display: flex;
   flex-direction: column;
@@ -885,7 +1062,7 @@ textarea {
   pointer-events: none;
 }
 
-/* Editable pros & cons chips */
+/* Pros & cons: clickable file-tab chips with a collapsed free-text entry */
 .canon-list-editor {
   display: flex;
   flex-direction: column;
@@ -901,6 +1078,96 @@ textarea {
 .canon-list-input-row input {
   flex: 1 1 11rem;
   min-width: 0;
+}
+
+.canon-chip-group-label {
+  font-family: var(--font-condensed);
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.canon-chip-grid,
+.canon-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.canon-chip-toggle {
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm) var(--radius-lg) var(--radius-sm) var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  border-top-width: 3px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: left;
+  box-shadow: var(--shadow-press-1), var(--shadow-inset-paper);
+}
+
+.canon-chip-toggle:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.canon-chip-toggle[aria-pressed="true"] {
+  background-color: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-bg);
+  font-weight: 600;
+  box-shadow: var(--shadow-offset-ink);
+}
+
+.canon-chip-toggle[aria-pressed="true"]::before {
+  content: "✓";
+  font-weight: 700;
+}
+
+.canon-chip-status {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-warning);
+}
+
+.canon-chip-status[hidden] {
+  display: none;
+}
+
+.canon-chip-more {
+  padding-top: var(--space-1);
+  border-top: 1px dashed var(--color-border-strong);
+}
+
+.canon-chip-more summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-min);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.canon-chip-more[open] summary {
+  color: var(--color-text);
+}
+
+.canon-chip-more label {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .canon-chip-list {
@@ -1052,16 +1319,6 @@ textarea {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-
-.canon-ai-origin-list {
-  margin: 0;
-  padding-left: var(--space-4);
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
 }
 
 .canon-card-actions,
