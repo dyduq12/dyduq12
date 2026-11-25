@@ -77,10 +77,10 @@
   --ink-kino-wash: color-mix(in srgb, var(--ink-kino) 12%, var(--color-surface));
   --ink-echo-wash: color-mix(in srgb, var(--ink-echo) 12%, var(--color-surface));
 
-  /* Typography (system stacks only, zero webfonts) */
-  --font-condensed: "Bahnschrift", "DIN Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
+  /* Typography: Google Fonts first (linked in index.html), previous system stacks kept as fallbacks */
+  --font-condensed: "Big Shoulders Display", "Bahnschrift", "DIN Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --font-body: "Source Serif 4", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
