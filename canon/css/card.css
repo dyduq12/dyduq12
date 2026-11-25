@@ -1,32 +1,43 @@
-/* CANON Editorial Card & 3D Flip (Safari-safe preserve-3d layering) */
+/* CANON Editorial Card & 3D Flip: printed poster, matte frame, safe preserve-3d layering */
 
+/* Shell owns perspective, frame shadow and the card silhouette (stage + action footer) */
 .canon-card-shell {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 0;
   perspective: 1200px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-press-2), 0 10px 26px var(--color-card-glow);
 }
 
+/* Stage must keep the 3D context alive between shell perspective and inner */
 .canon-card-stage {
   position: relative;
   width: 100%;
-  min-height: 490px;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card), 0 0 0 1px var(--color-border), 0 10px 26px var(--color-card-glow);
+  min-height: 560px;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
 }
 
-/* Only transform & preserve-3d on .canon-card-inner (no filter, overflow, or opacity < 1 for Safari) */
+/* Only transform and preserve-3d here: no filter, overflow or opacity below 1 (Safari) */
 .canon-card-inner {
   position: relative;
   width: 100%;
-  min-height: 490px;
+  min-height: 560px;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   transition: transform var(--duration-flip) var(--ease-flip);
 }
 
 .canon-card-shell[data-flipped="true"] .canon-card-inner {
   transform: rotateY(180deg);
+}
+
+@media (hover: hover) {
+  .canon-card-shell[data-flipped="false"]:hover .canon-card-inner {
+    transform: rotateY(-4deg);
+  }
 }
 
 .canon-card-face {
@@ -38,23 +49,96 @@
   flex-direction: column;
 }
 
+/* Separate Z planes so the hidden face can never z-fight with the visible one */
 .canon-card-face--front {
-  transform: rotateY(0deg);
+  z-index: 1;
+  transform: rotateY(0deg) translateZ(1px);
 }
 
 .canon-card-face--back {
-  transform: rotateY(180deg);
+  z-index: 0;
+  transform: rotateY(180deg) translateZ(1px);
 }
 
-/* Clipping and visual surface live on a separate child inside the face */
+.canon-card-shell[data-flipped="false"] .canon-card-face--back,
+.canon-card-shell[data-flipped="true"] .canon-card-face--front {
+  pointer-events: none;
+}
+
+.canon-card-shell[data-flipped="true"] .canon-card-face--front {
+  z-index: 0;
+}
+
+.canon-card-shell[data-flipped="true"] .canon-card-face--back {
+  z-index: 1;
+}
+
+/* Every descendant that clips, scrolls or stacks gets its own backface rule (not inherited) */
+.canon-card-surface,
+.canon-card-surface::before,
+.canon-card-surface::after,
+.canon-card-poster,
+.canon-card-poster::before,
+.canon-card-cover-img,
+.canon-card-placeholder-monogram,
+.canon-card-type-pill,
+.canon-card-front-body,
+.canon-card-back-body,
+.canon-card-hall-badge {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Clipping and paper surface live on a child of the face */
 .canon-card-surface {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--radius-lg);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm) var(--radius-sm) var(--radius-none) var(--radius-none);
+  background-color: color-mix(in srgb, var(--work-a) 6%, var(--color-surface));
+  border: 1px solid var(--color-border-strong);
+  border-bottom: 0;
+}
+
+.canon-card-face--back .canon-card-surface {
+  background-color: color-mix(in srgb, var(--work-b) 7%, var(--color-surface));
+}
+
+/* Dog-ear fold and folio: a quiet hint that the poster turns over */
+.canon-card-surface::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  z-index: 2;
+  pointer-events: none;
+  background-image: linear-gradient(315deg, transparent 47%, var(--color-border-strong) 47% 53%, transparent 53%),
+    linear-gradient(315deg, var(--color-bg) 0 50%, var(--color-surface-alt) 50% 100%);
+}
+
+.canon-card-surface::before {
+  position: absolute;
+  right: 2.25rem;
+  bottom: var(--space-2);
+  z-index: 2;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-micro);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.canon-card-face--front .canon-card-surface::before {
+  content: "1 / 2";
+}
+
+.canon-card-face--back .canon-card-surface::before {
+  content: "2 / 2";
 }
 
 .canon-card-flip-btn {
@@ -76,18 +160,26 @@
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .canon-card-flip-btn:hover {
   background-color: transparent;
 }
 
-/* Front poster */
+.canon-card-flip-btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -4px;
+}
+
+/* Front poster: tinted matte (passe-partout) around the cover */
 .canon-card-poster {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
-  background-image: linear-gradient(135deg, var(--work-a), var(--work-b));
+  aspect-ratio: 3 / 2;
+  background-color: color-mix(in srgb, var(--work-a) 16%, var(--color-surface-alt));
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--work-a) 14%, transparent), color-mix(in srgb, var(--work-b) 14%, transparent));
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -95,48 +187,67 @@
   overflow: hidden;
 }
 
+.canon-card-poster::before {
+  content: "";
+  position: absolute;
+  inset: var(--space-3);
+  background-image: linear-gradient(135deg, var(--work-a), var(--work-b));
+  border: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-press-1);
+}
+
 .canon-card-cover-img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: var(--space-3);
+  width: calc(100% - 2 * var(--space-3));
+  height: calc(100% - 2 * var(--space-3));
   object-fit: cover;
+  object-position: center 25%;
   display: block;
+  border: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-press-1);
 }
 
 .canon-card-placeholder-monogram {
   position: relative;
   z-index: 1;
+  margin: var(--space-2);
   font-family: var(--font-condensed);
   font-size: var(--text-xl);
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  background-color: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  border-radius: var(--radius-none);
+  border: 1px solid var(--color-text);
+  background-color: color-mix(in srgb, var(--color-surface) 90%, transparent);
   color: var(--color-text);
 }
 
 .canon-card-type-pill {
   position: relative;
   z-index: 1;
+  margin: var(--space-2);
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-micro);
   text-transform: uppercase;
   padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-none);
   background-color: var(--color-surface);
   color: var(--color-text);
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-text);
+  box-shadow: var(--shadow-offset-ink);
 }
 
 .canon-card-front-body {
   flex: 1;
-  padding: var(--space-3) var(--space-4);
+  min-height: 0;
+  padding: var(--space-3) var(--space-4) var(--space-3);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  border-top: var(--rule-thick) solid var(--rule-color);
 }
 
 .canon-card-title-row {
@@ -144,7 +255,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--rule-hair) solid var(--rule-color);
   padding-bottom: var(--space-2);
 }
 
@@ -152,12 +263,13 @@
   margin: 0;
   min-width: 0;
   overflow-wrap: anywhere;
+  text-wrap: balance;
   font-family: var(--font-condensed);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: var(--tracking-display);
   text-transform: uppercase;
-  line-height: 1.15;
+  line-height: 0.95;
 }
 
 .canon-card-year {
@@ -165,45 +277,68 @@
   font-size: var(--text-sm);
   color: var(--color-text-muted);
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .canon-card-specs {
   margin: 0;
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: var(--space-1) var(--space-3);
+  gap: 0 var(--space-3);
   font-size: var(--text-xs);
 }
 
+.canon-card-specs dt,
+.canon-card-specs dd {
+  padding: var(--space-1) 0;
+  border-bottom: var(--rule-hair) solid var(--color-border-strong);
+}
+
+.canon-card-specs dt:nth-last-of-type(1),
+.canon-card-specs dd:nth-last-of-type(1) {
+  border-bottom: 0;
+}
+
 .canon-card-specs dt {
-  font-family: var(--font-condensed);
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-micro);
   text-transform: uppercase;
   color: var(--color-text-muted);
+  align-self: center;
 }
 
 .canon-card-specs dd {
   margin: 0;
+  font-family: var(--font-condensed);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--color-text);
   overflow-wrap: anywhere;
 }
 
 .canon-card-flip-hint {
   margin-top: auto;
+  padding-right: 4.5rem;
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--color-text-muted);
 }
 
 /* Back face */
 .canon-card-back-body {
   flex: 1;
-  padding: var(--space-3) var(--space-4);
+  min-height: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .canon-card-score-banner {
@@ -212,28 +347,33 @@
   justify-content: space-between;
   gap: var(--space-2);
   padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--rule-thick) solid var(--rule-color);
 }
 
 .canon-card-geral-score {
   font-family: var(--font-condensed);
-  font-size: var(--text-2xl);
-  font-weight: 700;
-  line-height: 1;
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: var(--tracking-display);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
   color: var(--color-accent);
 }
 
 .canon-card-hall-badge {
+  flex-shrink: 0;
   font-family: var(--font-condensed);
   font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background-color: var(--color-warning-bg);
   color: var(--color-warning);
-  border: 1px solid var(--color-warning);
+  border: 2px solid var(--color-warning);
+  box-shadow: 0 0 0 1px var(--color-warning-bg), 0 0 0 2px var(--color-warning);
+  transform: rotate(-4deg);
 }
 
 .canon-card-bars {
@@ -242,43 +382,60 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .canon-card-bar-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   font-size: var(--text-xs);
 }
 
 .canon-card-bar-head {
   display: flex;
   justify-content: space-between;
+  gap: var(--space-2);
+  font-family: var(--font-condensed);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
 }
 
 .canon-card-bar-track {
-  height: 6px;
-  border-radius: var(--radius-pill);
+  position: relative;
+  height: 8px;
+  border-radius: var(--radius-none);
+  border: 1px solid var(--color-border-strong);
   background-color: var(--color-surface-alt);
   overflow: hidden;
 }
 
 .canon-card-bar-fill {
   height: 100%;
-  background-color: var(--work-a);
-  border-radius: var(--radius-pill);
+  background-color: color-mix(in srgb, var(--work-a) 70%, var(--color-text));
+  border-radius: var(--radius-none);
+}
+
+/* Ruler ticks over the fill: ten segments */
+.canon-card-bar-track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(90deg, transparent 0, transparent calc(10% - 1px), var(--color-surface) calc(10% - 1px), var(--color-surface) 10%);
 }
 
 .canon-card-lists {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-2);
+  gap: var(--space-3);
   font-size: var(--text-xs);
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 380px) {
+@media (max-width: 330px) {
   .canon-card-lists {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -286,39 +443,112 @@
 
 .canon-card-lists h4 {
   margin: 0 0 var(--space-1);
+  padding-bottom: var(--space-1);
+  border-bottom: var(--rule-hair) solid var(--color-border-strong);
   font-family: var(--font-condensed);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+}
+
+.canon-card-lists > div:nth-child(1) h4 {
+  color: var(--ink-save);
+}
+
+.canon-card-lists > div:nth-child(2) h4 {
+  color: var(--ink-koma);
 }
 
 .canon-card-lists ul {
   margin: 0;
-  padding-left: var(--space-4);
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.canon-card-lists li {
+  position: relative;
+  padding-left: 0.9rem;
+}
+
+.canon-card-lists li::before {
+  position: absolute;
+  left: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.canon-card-lists > div:nth-child(1) li::before {
+  content: "+";
+  color: var(--ink-save);
+}
+
+.canon-card-lists > div:nth-child(2) li::before {
+  content: "\2212";
+  color: var(--ink-koma);
 }
 
 .canon-card-verdict {
   margin: 0;
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
-  border-top: 1px solid var(--color-border);
+  margin-top: auto;
   padding-top: var(--space-2);
+  padding-right: 3rem;
+  border-top: var(--rule-hair) solid var(--rule-color);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-text);
   overflow-wrap: anywhere;
 }
 
+/* Action footer: bolted onto the card base, same frame, hairline separator */
 .canon-card-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-top: var(--rule-hair) solid var(--rule-color);
+  border-radius: var(--radius-none) var(--radius-none) var(--radius-sm) var(--radius-sm);
+  background-color: var(--color-surface-alt);
 }
 
 .canon-card-source {
+  flex: 1 1 auto;
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: var(--text-micro);
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
   color: var(--color-text-muted);
 }
 
 .canon-card-btn-group {
+  flex: 1 1 14rem;
   display: flex;
-  gap: var(--space-2);
+  justify-content: flex-end;
+  gap: var(--space-1);
+}
+
+.canon-card-btn-group button {
+  flex: 1 1 auto;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--font-condensed);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canon-card-inner {
+    transition: none;
+  }
+
+  .canon-card-shell[data-flipped="false"]:hover .canon-card-inner {
+    transform: none;
+  }
 }
