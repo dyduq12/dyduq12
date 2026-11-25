@@ -49,34 +49,31 @@ const TECH_SPEC_FIELDS_BY_TYPE = Object.freeze({
   ]
 });
 
+// Only the 4 active criteria are shown. `direcao_arte` (legacy) never appears as a bar.
 const CRITERION_LABELS_BY_TYPE = Object.freeze({
   game: [
     { key: 'historia', label: 'História' },
     { key: 'gameplay_ritmo', label: 'Gameplay' },
     { key: 'graficos_fotografia', label: 'Gráficos' },
-    { key: 'trilha', label: 'Trilha Sonora' },
-    { key: 'direcao_arte', label: 'Direção de Arte' }
+    { key: 'trilha', label: 'Trilha Sonora' }
   ],
   movie: [
     { key: 'historia', label: 'História / Roteiro' },
     { key: 'gameplay_ritmo', label: 'Ritmo' },
     { key: 'graficos_fotografia', label: 'Fotografia' },
-    { key: 'trilha', label: 'Trilha Sonora' },
-    { key: 'direcao_arte', label: 'Direção de Arte' }
+    { key: 'trilha', label: 'Trilha Sonora' }
   ],
   series: [
     { key: 'historia', label: 'História / Roteiro' },
     { key: 'gameplay_ritmo', label: 'Ritmo' },
     { key: 'graficos_fotografia', label: 'Fotografia' },
-    { key: 'trilha', label: 'Trilha Sonora' },
-    { key: 'direcao_arte', label: 'Direção de Arte' }
+    { key: 'trilha', label: 'Trilha Sonora' }
   ],
   anime: [
     { key: 'historia', label: 'História' },
     { key: 'gameplay_ritmo', label: 'Ritmo / Animação' },
     { key: 'graficos_fotografia', label: 'Visual / Fotografia' },
-    { key: 'trilha', label: 'Trilha Sonora' },
-    { key: 'direcao_arte', label: 'Direção de Arte' }
+    { key: 'trilha', label: 'Trilha Sonora' }
   ]
 });
 
@@ -88,6 +85,12 @@ function formatSpecValue(value) {
   return trimmed.length > 0 ? trimmed : EMPTY_SPEC_FALLBACK;
 }
 
+/**
+ * Formats a score with 1 decimal place and a comma (e.g. 8.875 -> "8,9").
+ * The exact value (multiples of 0.125) stays untouched in the model; only the display is rounded.
+ * @param {unknown} value
+ * @returns {string}
+ */
 function formatScore(value) {
   const num = typeof value === 'number' && Number.isFinite(value) ? value : 0;
   return num.toFixed(1).replace('.', ',');
@@ -118,7 +121,7 @@ export function getTechSpecsForWork(work) {
 }
 
 /**
- * Returns the 5 criterion bar descriptors adapted to the work's media type.
+ * Returns the 4 criterion bar descriptors adapted to the work's media type.
  * @param {string} type
  * @returns {Array<{ key: string, label: string }>}
  */
