@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Currículo-portfólio de Eduardo Borborema Brito (Dyduq12): Técnico em Informática, Arquitetura de Soluções, Automação & Design Visual.">
+  <meta name="theme-color" content="#0B0E14">
+  <title>Eduardo Borborema Brito — Dyduq12</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <main class="page">
+
+    <!-- BLOCO: HERO -->
+    <section class="hero" aria-label="Identidade e contatos">
+
+      <!-- Modulo: identidade -->
+      <header class="card card--identidade">
+        <div id="slot-logo" class="slot slot--logo">
+          <img src="assets/logo-dyduq12.svg" alt="Dyduq12" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <span class="slot__fallback" hidden>
+            <svg class="logo-fallback" viewBox="0 0 192 56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Dyduq12">
+              <path class="logo-fallback__traco" d="M14 16 L30 28 L14 40" fill="none" stroke-width="4"/>
+              <path class="logo-fallback__traco" d="M34 43 H52" fill="none" stroke-width="4"/>
+              <text class="logo-fallback__texto" x="62" y="36">DYDUQ12</text>
+            </svg>
+          </span>
+        </div>
+
+        <div class="identidade__texto">
+          <h1 class="nome">Eduardo <span class="nome__acento">Borborema</span> Brito</h1>
+          <p class="subtitulo"><strong>Técnico em Informática</strong> | Arquitetura de Soluções, Automação &amp; Design Visual</p>
+        </div>
+      </header>
+
+      <!-- Modulo: foto -->
+      <figure class="card card--foto">
+        <div id="slot-foto" class="slot slot--foto">
+          <img src="assets/foto-eduardo.png" alt="Eduardo Borborema Brito" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <figcaption class="slot__fallback" hidden>
+            <span>FOTO RECORTADA</span>
+            <small>(assets/foto-eduardo.png)</small>
+          </figcaption>
+        </div>
+      </figure>
+
+      <!-- Modulo: contatos e status -->
+      <aside class="card card--contatos" aria-label="Contatos e status">
+        <p class="badge"><span class="badge__ponto" aria-hidden="true"></span>Disponível para Estágio TI &amp; Projetos</p>
+
+        <dl class="contatos">
+          <div class="contatos__item">
+            <dt>Mail</dt>
+            <dd><a href="mailto:eduardo.borborema4@gmail.com">eduardo.borborema4@gmail.com</a></dd>
+          </div>
+          <div class="contatos__item">
+            <dt>Whats</dt>
+            <dd><a href="https://wa.me/5538999428568" rel="noopener">(38) 99942-8568</a></dd>
+          </div>
+          <div class="contatos__item">
+            <dt>Git</dt>
+            <dd><a href="https://github.com/Dyduq12" rel="noopener">github.com/Dyduq12</a></dd>
+          </div>
+          <div class="contatos__item">
+            <dt>Web</dt>
+            <dd><a href="https://diduke12.pw" rel="noopener">diduke12.pw</a></dd>
+          </div>
+          <div class="contatos__item contatos__item--texto">
+            <dt>Local</dt>
+            <dd>Parnaíba – PI (Disponível remoto ou presencial conforme mudança universitária)</dd>
+          </div>
+        </dl>
+      </aside>
+
+    </section>
+
+    <!-- BLOCO: PERFIL -->
+    <section class="card card--claro card--perfil" aria-labelledby="titulo-perfil">
+      <h2 id="titulo-perfil" class="secao-titulo">
+        <svg class="ico-cli" viewBox="0 0 12 10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1 L6 5 L1 9" fill="none" stroke-width="1.6"/><path d="M7.5 9 H11.5" fill="none" stroke-width="1.6"/></svg>
+        01 // PERFIL &amp; ABORDAGEM
+      </h2>
+      <p class="perfil__texto">Técnico em Informática e futuro graduando em Ciência da Computação, com perfil generalista focado em Arquitetura de Soluções, Engenharia de Produto e Design Visual. Diferencial na investigação de problemas antes da execução, estruturação de softwares local-first, automação de fluxos com Python e JavaScript/TypeScript, administração de infraestrutura local e 5 anos de vivência profissional em design gráfico, atendimento e vendas consultivas.</p>
+    </section>
+
+    <!-- BLOCO: PROJETOS -->
+    <section class="secao" aria-labelledby="titulo-projetos">
+      <h2 id="titulo-projetos" class="secao-titulo">
+        <svg class="ico-cli" viewBox="0 0 12 10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1 L6 5 L1 9" fill="none" stroke-width="1.6"/><path d="M7.5 9 H11.5" fill="none" stroke-width="1.6"/></svg>
+        02 // PROJETOS DE ENGENHARIA &amp; SOFTWARE
+      </h2>
+
+      <div class="grid-projetos">
+
+        <article class="card projeto projeto--destaque projeto--l" data-project="mindnote" tabindex="0">
+          <span class="projeto__num">P1</span>
+          <h3 class="projeto__titulo">MindNote Engine</h3>
+          <p class="projeto__stack">JS Modular · Python · SVG/PDF</p>
+          <p class="projeto__descricao">Arquitetura e desenvolvimento de motor vetorial para criação de mapas mentais contínuos com escrita via S Pen, núcleo matemático validado por testes de regressão e exportação calibrada fisicamente em SVG e PDF.</p>
+        </article>
+
+        <article class="card projeto projeto--l" data-project="canon" tabindex="0">
+          <span class="projeto__num">P2</span>
+          <h3 class="projeto__titulo">CANON</h3>
+          <p class="projeto__stack">JS ES Modules · IndexedDB · APIs REST · Web Audio</p>
+          <p class="projeto__descricao">Aplicação web 100% client-side e local-first de curadoria editorial (AniList, TMDB, RAWG) com 14 ADRs documentados e geração de pôsteres PNG e vídeos MP4 diretamente no navegador.</p>
+        </article>
+
+        <article class="card projeto projeto--m" data-project="storage" tabindex="0">
+          <span class="projeto__num">P3</span>
+          <h3 class="projeto__titulo">Storage Auditor &amp; Safe Mover</h3>
+          <p class="projeto__stack">Python · SQLite · CustomTkinter</p>
+          <p class="projeto__descricao">Utilitário desktop para auditoria de disco NTFS, deduplicação SHA-256 em 4 estágios e movimentação atômica segura de arquivos sem perda de dados.</p>
+        </article>
+
+        <article class="card projeto projeto--m" data-project="brave" tabindex="0">
+          <span class="projeto__num">P4</span>
+          <h3 class="projeto__titulo">Brave Neural Reader</h3>
+          <p class="projeto__stack">Manifest V3 · WebAssembly · ONNX / Piper TTS</p>
+          <p class="projeto__descricao">Extensão de navegador para leitura de páginas em voz alta com síntese neural pt-BR 100% offline e tempo de resposta abaixo de 850 ms.</p>
+        </article>
+
+        <article class="card projeto projeto--m" data-project="clinica" tabindex="0">
+          <span class="projeto__num">P5</span>
+          <h3 class="projeto__titulo">Sistema Clínico Local-First</h3>
+          <p class="projeto__stack">PWA · IndexedDB · Node.js · PostgreSQL</p>
+          <p class="projeto__descricao">Arquitetura de sistema offline-first para gestão de clínica médica, com sincronização local, conformidade LGPD e automação de atendimento.</p>
+        </article>
+
+        <article class="card projeto projeto--full" data-project="reversa" tabindex="0">
+          <span class="projeto__num">P6</span>
+          <h3 class="projeto__titulo">Localização &amp; Engenharia Reversa de Software</h3>
+          <p class="projeto__stack">Python · Android WebView · i18n</p>
+          <p class="projeto__descricao">Desenvolvimento de scripts para extração, tradução automatizada multilíngue (5 idiomas), auditoria de fontes e reinjeção de strings em jogos e apps Android híbridos.</p>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- BLOCO: TRAJETORIA -->
+    <section class="secao" aria-labelledby="titulo-trajetoria">
+      <h2 id="titulo-trajetoria" class="secao-titulo">
+        <svg class="ico-cli" viewBox="0 0 12 10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1 L6 5 L1 9" fill="none" stroke-width="1.6"/><path d="M7.5 9 H11.5" fill="none" stroke-width="1.6"/></svg>
+        03 // TRAJETÓRIA PROFISSIONAL &amp; AUTÔNOMA
+      </h2>
+
+      <div class="grid-trajetoria">
+
+        <article class="card experiencia">
+          <p class="experiencia__periodo"><time datetime="2024-01">01/2024</time> – Atual</p>
+          <h3 class="experiencia__cargo">Desenvolvedor de Projetos Autorais &amp; Designer Freelancer <span class="experiencia__org">(Dyduq12)</span></h3>
+          <p class="experiencia__descricao">Concepção, arquitetura e entrega de ferramentas de produtividade, extensões de navegador/IDE (VS Code), automações em Python/JS e identidades visuais sob demanda.</p>
+        </article>
+
+        <article class="card card--claro experiencia">
+          <p class="experiencia__periodo"><time datetime="2025-06">06/2025</time> – <time datetime="2025-07">07/2025</time></p>
+          <h3 class="experiencia__cargo">Consultor de Vendas <span class="experiencia__org">| Projeto +Saúde (SELS) – Janaúba/MG</span></h3>
+          <p class="experiencia__descricao">Prospecção ativa e vendas consultivas presenciais e online para tomadores de decisão (incluindo gestores públicos), atingindo meta de R$ 3.500 em 3 semanas.</p>
+        </article>
+
+        <article class="card card--claro experiencia">
+          <p class="experiencia__periodo"><time datetime="2019-01">01/2019</time> – <time datetime="2024-01">01/2024</time></p>
+          <h3 class="experiencia__cargo">Designer Gráfico &amp; Assistente de Produção Audiovisual <span class="experiencia__org">| J7 MKT – Santo Antônio do Retiro/MG</span></h3>
+          <p class="experiencia__descricao">Criação e fechamento de artes gráficas no CorelDRAW para impressão (CMYK, banners, folhetos, cartazes), atendimento ao cliente em rotina de gráfica, fotografia e edição de vídeo.</p>
+        </article>
+
+        <article class="card experiencia">
+          <p class="experiencia__periodo"><time datetime="2018-07">07/2018</time> – <time datetime="2018-12">12/2018</time></p>
+          <h3 class="experiencia__cargo">Auxiliar Operacional <span class="experiencia__org">| Cores e Artes – Santo Antônio do Retiro/MG</span></h3>
+          <p class="experiencia__descricao">Atuação em pintura predial e manutenção básica, desenvolvendo disciplina operacional e trabalho em equipe.</p>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- BLOCO: COMPETENCIAS, FORMACAO E IDIOMAS -->
+    <section class="secao" aria-labelledby="titulo-competencias">
+      <h2 id="titulo-competencias" class="secao-titulo">
+        <svg class="ico-cli" viewBox="0 0 12 10" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1 L6 5 L1 9" fill="none" stroke-width="1.6"/><path d="M7.5 9 H11.5" fill="none" stroke-width="1.6"/></svg>
+        04 // COMPETÊNCIAS, FORMAÇÃO &amp; IDIOMAS
+      </h2>
+
+      <div class="grid-mosaico">
+
+        <article class="card competencia competencia--s">
+          <h3 class="competencia__titulo">Arquitetura &amp; Produto</h3>
+          <p>Levantamento de requisitos, documentação técnica (ADRs), sistemas offline/local-first, pipelines i18n e orquestração de IA aplicada.</p>
+        </article>
+
+        <article class="card competencia competencia--s">
+          <h3 class="competencia__titulo">Linguagens &amp; Web</h3>
+          <p>JavaScript (ES Modules), TypeScript, Python, HTML5, CSS3, Node.js (Fastify), React, SQLite e IndexedDB.</p>
+        </article>
+
+        <article class="card competencia competencia--s">
+          <h3 class="competencia__titulo">Ferramentas &amp; Extensões</h3>
+          <p>Git/GitHub, WebExtensions (Manifest V3), Extensões VS Code, WebAssembly (FFmpeg, Piper TTS), PowerShell e Arduino (básico).</p>
+        </article>
+
+        <article class="card competencia competencia--m">
+          <h3 class="competencia__titulo">Infraestrutura &amp; Sistemas</h3>
+          <p>Montagem e manutenção de computadores, Linux/Windows, redes locais, administração de servidores (Umbrel OS / Raspberry Pi e servidores de jogos).</p>
+        </article>
+
+        <article class="card competencia competencia--m">
+          <h3 class="competencia__titulo">Design &amp; Audiovisual</h3>
+          <p>CorelDRAW (identidade visual e fechamento gráfico CMYK), fotografia e edição de imagem/vídeo.</p>
+        </article>
+
+        <article class="card card--claro formacao">
+          <h3 class="bloco-titulo">Formação &amp; Cursos</h3>
+          <ul class="formacao__lista">
+            <li class="formacao__item">
+              <strong>Técnico em Informática</strong>
+              <span>Concluído – Mato Verde/MG (Hardware, Manutenção de Computadores, Redes, Sistemas de Informação, Pacote Office).</span>
+            </li>
+            <li class="formacao__item">
+              <strong>Ensino Médio</strong>
+              <span>Concluído – E.E. Prefeito Odilon Fernandes Costa, Santo Antônio do Retiro/MG.</span>
+            </li>
+            <li class="formacao__item">
+              <strong>Cursos Complementares</strong>
+              <span>Curso Técnico de Vendas (SELS – 2025) e Curso de Liderança de Adolescentes (IASD).</span>
+            </li>
+          </ul>
+        </article>
+
+        <article class="card card--cobalto idiomas">
+          <h3 class="bloco-titulo">Idiomas</h3>
+          <dl class="idiomas__lista">
+            <div class="idiomas__item"><dt>Português</dt><dd>Nativo</dd></div>
+            <div class="idiomas__item"><dt>Espanhol</dt><dd>Intermediário (B1)</dd></div>
+            <div class="idiomas__item"><dt>Inglês</dt><dd>Básico (A2 – leitura técnica intermediária)</dd></div>
+          </dl>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Container do preview flutuante (conteudo gerado por js/preview.js) -->
+  <div id="project-preview" class="preview" role="tooltip" aria-hidden="true"></div>
+
+  <script src="js/preview.js"></script>
+</body>
+</html>
