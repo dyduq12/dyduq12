@@ -67,11 +67,13 @@
 * { margin: 0; padding: 0; }
 
 html {
+  min-width: 210mm;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
 body {
+  min-width: 210mm;
   font-family: var(--f-corpo);
   font-weight: 400;
   font-style: normal;
@@ -85,6 +87,7 @@ h1, h2, h3 { font-family: var(--f-display); font-weight: 700; font-style: normal
 strong, b { font-weight: 600; }
 em, i, address, cite { font-style: normal; }
 img { display: block; max-width: 100%; }
+svg { flex: none; }
 ul, ol { list-style: none; }
 dd { margin: 0; }
 
@@ -111,6 +114,7 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
    ========================================================================== */
 .page {
   width: 210mm;
+  min-width: 210mm;
   max-width: 210mm;
   margin: 0 auto;
   padding: 12mm;
@@ -200,13 +204,14 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
 .row--hero { align-items: stretch; }
 .row--hero > .card { height: 100%; }
 
+/* Identidade compacta: logo discreto + nome, centralizados na vertical */
 .card--identidade {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 14px;
+  justify-content: center;
+  gap: 16px;
 }
-.brand-logo { width: 62mm; max-width: 100%; height: auto; }
+.brand-logo { width: 34mm; max-width: 100%; height: auto; }
 
 .nome {
   font-size: 38pt;
@@ -225,7 +230,7 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
 .card--contatos {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .badge {
@@ -250,17 +255,17 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 6px;
+  gap: 7px;
 }
 .contato { display: block; }
 
-/* Container de cada contato: grid 18px + texto (icone nunca desloca no topo) */
+/* Cada contato: icone (18px) ao lado esquerdo de rotulo + link */
 .contato__caixa {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
   column-gap: 10px;
-  padding: 7px 10px;
+  padding: 6px 10px;
   background: var(--claro);
   border: 1px solid var(--hairline);
   border-radius: 10px;
@@ -272,7 +277,15 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
   place-items: center;
   color: var(--cobalto);
 }
-.ico { width: 16px; height: 16px; display: block; }
+.ico,
+.contato__icone svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  max-width: 16px;
+  max-height: 16px;
+  flex: none;
+}
 .contato--local .contato__icone { color: var(--esmeralda-texto); }
 .contato__corpo { display: flex; flex-direction: column; gap: 1px; }
 .contato__rotulo {
@@ -349,7 +362,7 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
   line-height: 1.55;
   color: var(--cobalto-escuro);
 }
-.projeto__descricao { font-size: 8.2pt; line-height: 1.5; color: var(--tinta-2); }
+.projeto__descricao { margin-bottom: 8px; font-size: 8.2pt; line-height: 1.5; color: var(--tinta-2); }
 
 .projeto--destaque { border-left: 3px solid var(--cobalto); }
 .projeto--dominante .projeto__titulo { font-size: 16pt; }
@@ -361,13 +374,13 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
   width: auto;
   height: 60px;
   max-width: 100%;
-  margin-top: 10px;
+  margin-top: 2px;
+  margin-bottom: 10px;
   align-self: flex-start;
 }
 .projeto__widget--mini {
   height: 44px;
   max-height: 44px;
-  margin-top: 8px;
 }
 .widget__linhas { stroke: var(--cobalto); }
 .widget__no { fill: var(--papel); stroke: var(--hairline-forte); stroke-width: 1; }
@@ -378,7 +391,8 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 2px;
+  margin-bottom: 10px;
 }
 .pipeline__etapa {
   display: flex;
@@ -395,7 +409,7 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
 .pipeline__etapa:last-child .pipeline__num { color: var(--esmeralda-texto); }
 .pipeline__nome { font-weight: 600; font-size: 7.8pt; line-height: 1.3; color: var(--tinta); }
 
-/* Barra de hiperlink no rodape do projeto */
+/* Barra de hiperlink: sempre na base do card (icone + endereco + selo) */
 .projeto__rodape {
   margin-top: auto;
   padding-top: 8px;
@@ -403,29 +417,36 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  column-gap: 6px;
+  row-gap: 4px;
   font-family: var(--f-mono);
   font-size: 7pt;
   line-height: 1.4;
   color: var(--cobalto);
 }
-.projeto__descricao + .projeto__rodape,
-.projeto__widget + .projeto__rodape,
-.pipeline + .projeto__rodape { margin-top: auto; }
-.projeto__widget--mini,
-.projeto__widget,
-.pipeline { margin-bottom: 10px; }
 
-.ico-link { width: 11px; height: 11px; flex: none; color: var(--cobalto); }
+.ico-link {
+  display: block;
+  width: 11px;
+  height: 11px;
+  max-width: 11px;
+  max-height: 11px;
+  flex: none;
+  color: var(--cobalto);
+}
 .projeto__link {
+  flex: 0 1 auto;
+  min-width: 0;
   font-family: var(--f-mono);
   font-weight: 500;
   font-size: 7pt;
+  line-height: 1.4;
   color: var(--cobalto);
   overflow-wrap: anywhere;
 }
 .selo-repo {
   margin-left: auto;
+  flex: none;
   padding: 1px 8px;
   border: 1px solid var(--cobalto-linha);
   border-radius: 99px;
@@ -445,18 +466,24 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
 }
 
 /* ==========================================================================
-   LINHAS 6 E 7: TRAJETORIA
+   LINHAS 6 E 7: TRAJETORIA (datas padronizadas)
    ========================================================================== */
 .experiencia { display: flex; flex-direction: column; }
 
-.experiencia__periodo {
-  margin-bottom: 6px;
+/* Mesmo estilo para todas as datas, inclusive o selo ATUAL */
+.experiencia__periodo,
+.experiencia__selo {
   font-family: var(--f-mono);
   font-weight: 500;
   font-size: 7pt;
+  line-height: 1.4;
   letter-spacing: 0.04em;
+  text-transform: none;
+  white-space: nowrap;
   color: var(--cobalto);
 }
+.experiencia__periodo { margin-bottom: 6px; }
+
 .experiencia__cargo { margin-bottom: 6px; font-size: 10pt; line-height: 1.28; color: var(--tinta); }
 .experiencia__org {
   display: block;
@@ -476,27 +503,13 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
 }
 .experiencia__selo {
   flex: none;
-  padding: 4px 10px;
-  font-family: var(--f-mono);
-  font-weight: 700;
-  font-size: 7pt;
-  letter-spacing: 0.1em;
-  white-space: nowrap;
+  padding: 3px 10px;
   color: var(--esmeralda-texto);
   background: var(--esmeralda-tinta);
   border: 1px solid var(--esmeralda-linha);
   border-radius: 6px;
 }
 .experiencia__corpo { flex: 1 1 auto; }
-
-.experiencia--alta .experiencia__periodo {
-  font-family: var(--f-display);
-  font-weight: 700;
-  font-size: 14pt;
-  letter-spacing: -0.01em;
-  margin-bottom: 10px;
-}
-.experiencia--alta .experiencia__cargo { font-size: 11pt; }
 
 /* ==========================================================================
    LINHAS 8 A 10: COMPETENCIAS, FORMACAO, IDIOMAS
@@ -666,6 +679,7 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
   }
 
   html, body {
+    min-width: 210mm;
     background: #FFFFFF;
     padding: 0;
     -webkit-print-color-adjust: exact;
@@ -675,6 +689,7 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
   /* Trava de 21 cm tambem no PDF */
   .page {
     width: 210mm;
+    min-width: 210mm;
     max-width: 210mm;
     margin: 0 auto;
     padding: 8mm 10mm;
@@ -711,29 +726,28 @@ a:focus-visible { outline: 2px solid var(--cobalto-vivo); outline-offset: 2px; b
   .card--claro { background: #FFFFFF; }
   .card--metricas { padding-top: 16px; }
 
-  /* Flex problematico -> grid/block */
+  /* Flex problematico -> grid/block (projetos seguem em coluna p/ rodape na base) */
   .stack { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; }
   .stack > .card { flex: none; }
-  .card--identidade { display: block; }
-  .card--identidade .brand { margin-bottom: 10px; }
+  .card--identidade { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
   .card--contatos { display: block; }
   .card--contatos .badge { display: inline-flex; margin-bottom: 8px; }
-  .contatos { display: grid; gap: 5px; }
+  .contatos { display: grid; gap: 6px; }
   .contato__caixa { background: #FFFFFF; border-color: var(--hairline-forte); padding: 5px 9px; }
   .contato__corpo { display: block; }
   .contato__rotulo { display: block; }
   .metricas { display: grid; gap: 6px; }
   .metrica { padding: 6px 8px; background: #FFFFFF; }
-  .projeto, .experiencia, .competencia { display: block; }
+  .experiencia, .competencia { display: block; }
+  .projeto { display: flex; flex-direction: column; }
   .experiencia--atual { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
   .pipeline__etapa { display: block; background: #FFFFFF; padding: 5px 7px; }
   .pipeline__num { display: block; margin-bottom: 2px; }
 
-  /* Mini-diagramas e rodape no fluxo normal */
-  .projeto__widget { margin-top: 8px; margin-bottom: 8px; }
-  .projeto__widget--mini { margin-top: 6px; margin-bottom: 8px; }
-  .pipeline { margin-top: 8px; margin-bottom: 8px; gap: 6px; }
-  .projeto__rodape { margin-top: 0; padding-top: 6px; }
+  /* Mini-diagramas e rodape */
+  .projeto__widget { margin-top: 2px; margin-bottom: 8px; }
+  .pipeline { margin-top: 2px; margin-bottom: 8px; gap: 6px; }
+  .projeto__rodape { margin-top: auto; padding-top: 6px; }
 
   /* Palavras longas nunca cortam */
   a, .link, .contato__corpo, .contato__valor, .card, .card * { overflow-wrap: anywhere; }
